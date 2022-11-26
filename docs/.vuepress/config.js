@@ -3,6 +3,9 @@ module.exports = {
   description: '网捷回收-项目开发文档',
   base: "/wjhs-doc/",
   theme: 'reco',
+  markdown: {
+    extractHeaders: ['h4', 'h3']
+  },
   head: [
     [
       'link',

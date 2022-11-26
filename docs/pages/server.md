@@ -530,3 +530,307 @@ VALUES
 
 ### 第二章、SpringBoot项目初始化
 
+#### 2.1、项目环境版本说明
+
++ 操作系统环境：windows11
++ idea版本： 2021.3.1
++ MySQL版本：8.x
++ SpringBoot版本：2.5.14
+
+
+
+#### 2.2、idea初始化SpringBoot项目
+
++ 参考的教程(2019版本idea)：https://blog.csdn.net/wangmeixi/article/details/100013298
++ 参考的教程(2021版本idea)：https://blog.csdn.net/yxzone/article/details/118728302
+
+
+
+#### 2.3、配置数据库环境
+
++ 添加pom依赖
+
+  ```xml
+  <!-- mysql 驱动 -->
+  <dependency>
+      <groupId>mysql</groupId>
+      <artifactId>mysql-connector-java</artifactId>
+  </dependency>
+  
+  <!-- druid -->
+  <dependency>
+      <groupId>com.alibaba</groupId>
+      <artifactId>druid-spring-boot-starter</artifactId>
+      <version>1.2.14</version>
+  </dependency>
+  
+  <!-- flyway -->
+  <dependency>
+      <groupId>org.flywaydb</groupId>
+      <artifactId>flyway-core</artifactId>
+      <version>5.2.4</version>
+  </dependency>
+  
+  <!-- h2 数据库(测试) -->
+  <dependency>
+      <groupId>com.h2database</groupId>
+      <artifactId>h2</artifactId>
+      <scope>runtime</scope>
+  </dependency>
+  ```
+
+  
+
++ 添加配置文件
+
+  application.yml
+
+  ```yaml
+  server:
+    port: 80
+  
+  spring:
+    application:
+      name: wjhs
+  
+    profiles:
+      active: dev
+  
+    datasource:
+      druid:
+        driver-class-name: com.mysql.cj.jdbc.Driver
+        url: jdbc:mysql://${MYSQL_ADDRESS}/${MYSQL_DATABASE}?serverTimezone=Asia/Shanghai&allowMultiQueries=true&useUnicode=true&characterEncoding=UTF-8&useSSL=false
+        username: ${MYSQL_USER_NAME}
+        password: ${MySQL_PASSWORD}
+  
+    flyway:
+      # 是否启用flyway
+      enabled: true
+      # 编码格式，默认UTF-8
+      encoding: UTF-8
+      # 迁移sql脚本文件存放路径，默认db/migration
+      locations: classpath:db/migration
+      # 迁移sql脚本文件名称的前缀，默认V
+      sql-migration-prefix: V
+      # 迁移sql脚本文件名称的分隔符，默认2个下划线__
+      sql-migration-separator: __
+      # 迁移sql脚本文件名称的后缀
+      sql-migration-suffixes: .sql
+      # 迁移时是否进行校验，默认true
+      validate-on-migrate: true
+      # 当迁移发现数据库非空且存在没有元数据的表时，自动执行基准迁移，新建schema_version表
+      baseline-on-migrate: true
+  ```
+
+  
+
+  application-dev.yml(开发环境地址)
+
+  ```yaml
+  MYSQL_ADDRESS: localhost:3306
+  MYSQL_DATABASE: wjhs
+  MYSQL_USER_NAME: root
+  MySQL_PASSWORD: 123456
+  ```
+
+  
+
+  application-pro.yml(生产环境地址)
+
+  ```yaml
+  MYSQL_ADDRESS: localhost:3306
+  MYSQL_DATABASE: wjhs
+  MYSQL_USER_NAME: root
+  MySQL_PASSWORD: 123456
+  ```
+
+  
+
+  application.yml( 测试环境的配置文件)
+
+  ```yaml
+  spring:
+    application:
+      name: imusic
+  
+    datasource:
+      driver-class-name: org.h2.Driver
+      url: jdbc:h2:mem:wjhs;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE;MODE=MYSQL;
+      username: sa
+      password:
+  
+    sql:
+      init:
+        continue-on-error: false
+        platform: h2
+  
+    flyway:
+      enabled: false
+  
+    h2:
+      console:
+        path: /h2
+        enabled: true
+        settings:
+          web-allow-others: true
+  ```
+
+  
+
++ 使用flyway数据库版本管理工具
+
+  不熟悉可以flyway参考：https://developer.aliyun.com/article/842712、https://zhuanlan.zhihu.com/p/304110137
+
+  在项目的`resources`目录下建立 `db/migration`文件，然后分别建立脚本文件 `V20221124.01__init_create_table.sql` 和  `V20221124.02__init_table_data.sql`，第一个文件内容是 1.2(建表sql)章节中的代码，第二个文件内容是 1.3(数据初始化sql)章节中的代码。
+
+  
+
++ 启动项目注意观察控制台日志，启动成功后，在数据库中可以看到已按照定义好的脚本，完成数据库变更，并在`flyway_schema_history`表插入了sql执行记录。
+
+  
+
+#### 2.4、搭建swagger文档库
+
++ knife4j参考文档：https://doc.xiaominfo.com/docs/quick-start
+
++ 添加pom依赖
+
+  ```xml
+  <!-- Swagger2 -->
+  <dependency>
+      <groupId>com.github.xiaoymin</groupId>
+      <artifactId>knife4j-spring-boot-starter</artifactId>
+      <version>2.0.9</version>
+  </dependency>
+  ```
+
+  
+
++ 创建Swagger配置依赖
+
+  需要注意knife4j和springBoot版本(参考项目代码)，版本不兼容可能会造成项目启动失败。
+
+  ```java
+  package com.ilovesshan.wjhs.config;
+  
+  import org.springframework.context.annotation.Bean;
+  import org.springframework.context.annotation.Configuration;
+  import springfox.documentation.builders.ApiInfoBuilder;
+  import springfox.documentation.builders.PathSelectors;
+  import springfox.documentation.builders.RequestHandlerSelectors;
+  import springfox.documentation.service.Contact;
+  import springfox.documentation.spi.DocumentationType;
+  import springfox.documentation.spring.web.plugins.Docket;
+  import springfox.documentation.swagger2.annotations.EnableSwagger2WebMvc;
+  
+  /**
+   * Created with IntelliJ IDEA.
+   *
+   * @author: ilovesshan
+   * @date: 2022/11/24
+   * @description:
+   */
+  
+  
+  @Configuration
+  @EnableSwagger2WebMvc
+  public class Knife4jConfig {
+      @Bean(value = "dockerBean")
+      public Docket dockerBean() {
+          //指定使用Swagger2规范
+          Docket docket = new Docket(DocumentationType.SWAGGER_2)
+                  .apiInfo(new ApiInfoBuilder()
+                          //描述字段支持Markdown语法
+                          .description("# 网捷回收 APIs")
+                          .termsOfServiceUrl("https://ilovesshan.com")
+                          .contact(new Contact("ilovesshan", "http://localhost/doc.html", "2665939276@qq.com"))
+                          .version("1.0")
+                          .build())
+                  //分组名称
+                  .groupName("用户服务")
+                  .select()
+                  //这里指定Controller扫描包路径
+                  .apis(RequestHandlerSelectors.basePackage("com.ilovesshan.wjhs.controller"))
+                  .paths(PathSelectors.any())
+                  .build();
+          return docket;
+      }
+  }
+  ```
+
+  如果开发者使用的是Knife4j 2.x版本，并且Spring Boot版本高于2.4,那么需要在Spring Boot的yml文件中做如下配置：
+
+  ```yaml
+  spring:
+      mvc:
+          pathmatch:
+              # 配置策略
+              matching-strategy: ant-path-matcher
+  ```
+
+  
+
++ 使用swagger、新建一个接口Controller类，如下
+
+  ```java
+  package com.ilovesshan.wjhs.controller;
+  
+  import io.swagger.annotations.Api;
+  import io.swagger.annotations.ApiOperation;
+  import org.springframework.stereotype.Controller;
+  import org.springframework.web.bind.annotation.GetMapping;
+  import org.springframework.web.bind.annotation.RequestMapping;
+  import org.springframework.web.bind.annotation.ResponseBody;
+  
+  /**
+   * Created with IntelliJ IDEA.
+   *
+   * @author: ilovesshan
+   * @date: 2022/11/24
+   * @description:
+   */
+  
+  @Api(tags = "首页")
+  @Controller
+  @RequestMapping
+  public class IndexController {
+  
+      @GetMapping
+      @ResponseBody
+      @ApiOperation("index")
+      public String index() {
+          return "欢迎访问wjhs项目接口API文档,详细地址: http://localhost/doc.html";
+      }
+  }
+  ```
+
+  万事俱备，启动Spring Boot项目，浏览器访问Knife4j的文档地址即可查看效果，http://localhost/doc.html
+
+  
+
+#### 2.5、配置跨域
+
+为了开发方便、这里直接统一后端处理跨域，可以在前端通过代理方式解决跨域问题。
+
+```java
+@Configuration
+public class CrossConfig {
+    @Bean
+    public CorsFilter corsFilter() {
+        CorsConfiguration config = new CorsConfiguration();
+        //允许所有域名进行跨域调用
+        config.addAllowedOriginPattern("*");
+        //允许跨越发送cookie
+        config.setAllowCredentials(true);
+        //放行全部原始头信息
+        config.addAllowedHeader("*");
+        //允许所有请求方法跨域调用
+        config.addAllowedMethod("*");
+        config.addExposedHeader("*");
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", config);
+        return new CorsFilter(source);
+    }
+}
+```
+
