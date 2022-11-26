@@ -1,5 +1,5 @@
 ### 第一章、数据库设计
-#### 1.1、数据表预览
+#### 1、数据表预览
 
 ```
 -- 骑手/回收中心/平台用户表
@@ -32,7 +32,7 @@
 
 
 
-#### 1.2、数据表设计
+#### 2、数据表设计
 
 ```sql
 DROP DATABASE IF EXISTS wjhs;
@@ -436,7 +436,7 @@ CREATE TABLE `account_record`  (
 
 
 
-#### 1.3、初始化数据
+#### 3、初始化数据
 
 ```sql
 -- 初始化 用户表数据
@@ -530,7 +530,7 @@ VALUES
 
 ### 第二章、SpringBoot项目初始化
 
-#### 2.1、项目环境版本说明
+#### 1、项目环境版本说明
 
 + 操作系统环境：windows11
 + idea版本： 2021.3.1
@@ -539,14 +539,14 @@ VALUES
 
 
 
-#### 2.2、idea初始化SpringBoot项目
+#### 2、idea初始化SpringBoot项目
 
 + 参考的教程(2019版本idea)：https://blog.csdn.net/wangmeixi/article/details/100013298
 + 参考的教程(2021版本idea)：https://blog.csdn.net/yxzone/article/details/118728302
 
 
 
-#### 2.3、配置数据库环境
+#### 3、配置数据库环境
 
 + 添加pom依赖
 
@@ -689,7 +689,7 @@ VALUES
 
   
 
-#### 2.4、搭建swagger文档库
+#### 4、搭建swagger文档库
 
 + knife4j参考文档：https://doc.xiaominfo.com/docs/quick-start
 
@@ -808,7 +808,7 @@ VALUES
 
   
 
-#### 2.5、配置跨域
+#### 5、配置跨域
 
 为了开发方便、这里直接统一后端处理跨域，可以在前端通过代理方式解决跨域问题。
 
