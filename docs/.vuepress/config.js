@@ -45,19 +45,19 @@ module.exports = {
         items: [
           {
             text: '服务端',
-            link: '',
+            link: 'https://github.com/ilovesshan/wjhs.git',
           },
           {
             text: '平台端',
-            link: '',
+            link: 'https://github.com/ilovesshan/wjhs-admin.git',
           },
           {
             text: 'APP',
-            link: '',
+            link: 'https://github.com/ilovesshan/wjhs-app.git',
           },
           {
             text: '小程序',
-            link: '',
+            link: 'https://github.com/ilovesshan/wjhs-mp.git',
           },
         ],
       },
