@@ -534,6 +534,7 @@ VALUES
 
 + 操作系统环境：windows11
 + idea版本： 2021.3.1
++ jdk版本：1.8
 + MySQL版本：8.x
 + SpringBoot版本：2.5.14
 
