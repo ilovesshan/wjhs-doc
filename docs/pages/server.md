@@ -41,7 +41,7 @@ CREATE DATABASE wjhs;
 USE  wjhs;
 
 -- 备注： 
--- 			1、省市区街道sql语句, 从文件中自行导入
+-- 			1、省市区街道sql语句, 从文件中自行导入(github地址<https://github.com/wecatch/china_regions>)
 -- 			2、CODE状态码参考：系统字典表(system_dict)
 
 
