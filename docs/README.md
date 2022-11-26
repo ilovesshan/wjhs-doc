@@ -7,7 +7,7 @@ features:
 - title: 服务端技术栈
   details: SpringBoot + mybatis + mysql + knife4j + flyway
 - title: 平台端技术栈
-  details: vue3 + typescript + axios + vite + pinia
+  details: vue3 + typescript + axios + vite + pinia + element-plus
 - title: APP技术栈
   details: flutter + dio + getx + flutter_screenutil + provider + 原生android
 - title: 小程序技术栈
