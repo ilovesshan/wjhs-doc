@@ -109,7 +109,7 @@ CREATE TABLE `login_log`(
   `user_name` VARCHAR(10) NOT NULL COMMENT '用户名称',
   `login_ip` VARCHAR(128) DEFAULT NULL COMMENT '登录IP',
   `login_time` DATETIME(0) DEFAULT NULL COMMENT '登录时间',
-  `login_localtion` VARCHAR(50) DEFAULT NULL COMMENT '用户登录地址',
+  `login_location` VARCHAR(50) DEFAULT NULL COMMENT '用户登录地址',
   `is_delete` CHAR(3) DEFAULT 15 NOT NULL COMMENT '是否删除(14:已删除、15:未删除)',
   `browser` VARCHAR(50)  NULL DEFAULT '' COMMENT '浏览器类型',
 	`system_os` VARCHAR(50)  NULL DEFAULT '' COMMENT '操作系统',
