@@ -41,6 +41,10 @@ module.exports = {
         link: '/pages/mp.md',
       },
       {
+        text: '迭代回顾',
+        link: '/pages/iteration.md',
+      },
+      {
         text: '项目资源地址',
         items: [
           {
