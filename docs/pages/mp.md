@@ -216,7 +216,7 @@ export {
 
 
 
-### 第三章、登录和Tabbar搭建
+### 第三章、Tabbar搭建和实现授权
 
 #### 1、Tabbar搭建
 
