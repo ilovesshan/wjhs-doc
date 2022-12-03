@@ -846,15 +846,6 @@ VALUES
   import springfox.documentation.spring.web.plugins.Docket;
   import springfox.documentation.swagger2.annotations.EnableSwagger2WebMvc;
   
-  /**
-   * Created with IntelliJ IDEA.
-   *
-   * @author: ilovesshan
-   * @date: 2022/11/24
-   * @description:
-   */
-  
-  
   @Configuration
   @EnableSwagger2WebMvc
   public class Knife4jConfig {
@@ -880,9 +871,9 @@ VALUES
       }
   }
   ```
-
+  
   如果开发者使用的是Knife4j 2.x版本，并且Spring Boot版本高于2.4,那么需要在Spring Boot的yml文件中做如下配置：
-
+  
   ```yaml
   spring:
       mvc:
@@ -890,9 +881,9 @@ VALUES
               # 配置策略
               matching-strategy: ant-path-matcher
   ```
-
   
-
+  
+  
 + 使用swagger、新建一个接口Controller类，如下
 
   ```java
@@ -905,13 +896,6 @@ VALUES
   import org.springframework.web.bind.annotation.RequestMapping;
   import org.springframework.web.bind.annotation.ResponseBody;
   
-  /**
-   * Created with IntelliJ IDEA.
-   *
-   * @author: ilovesshan
-   * @date: 2022/11/24
-   * @description:
-   */
   
   @Api(tags = "首页")
   @Controller
@@ -926,9 +910,9 @@ VALUES
       }
   }
   ```
-
+  
   万事俱备，启动Spring Boot项目，浏览器访问Knife4j的文档地址即可查看效果，http://localhost/doc.html
-
+  
   
 
 #### 5、配置跨域 
@@ -953,6 +937,1153 @@ public class CrossConfig {
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);
         return new CorsFilter(source);
+    }
+}
+```
+
+
+
+### 第三章、工具类
+
+#### 1、客户端响应工具类
+
+```java
+package com.ilovesshan.wjhs.utils;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.http.HttpStatus;
+
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+
+public class ResponseUtil {
+
+    /**
+     * 响应给客户端数据工具类(JSON格式)
+     *
+     * @param response     响应对象
+     * @param responseData 响应数据
+     * @throws IOException
+     */
+    public static void write(HttpServletResponse response, Object responseData) throws IOException {
+        response.setHeader("Access-Control-Allow-Origin", "*");
+        response.setHeader("Cache-Control", "no-cache");
+        response.setCharacterEncoding("UTF-8");
+        response.setContentType("application/json");
+        response.setStatus(HttpStatus.UNAUTHORIZED.value());
+        String responseJson = new ObjectMapper().writeValueAsString(responseData);
+        response.getWriter().print(responseJson);
+        response.getWriter().flush();
+    }
+}
+
+```
+
+
+
+#### 2、缓存用户信息工具类
+
+```java
+package com.ilovesshan.wjhs.core.base;
+
+import java.util.HashMap;
+import java.util.Map;
+
+public class UserCache {
+
+    private static final ThreadLocal<Map<String, String>> THREAD_LOCAL = new ThreadLocal<>();
+
+    //判断线程map是否为空，为空就添加一个map
+    public static Map<String, String> getLocalMap() {
+        Map<String, String> map = THREAD_LOCAL.get();
+        if (map == null) {
+            map = new HashMap<>(16);
+            THREAD_LOCAL.set(map);
+        }
+        return map;
+    }
+
+    //把用户信息添加到线程map中
+    public static void set(String key, String name) {
+        Map<String, String> map = getLocalMap();
+        map.put(key, name);
+    }
+
+    //获得线程map中的数据
+    public static String get(String key) {
+        Map<String, String> map = getLocalMap();
+        return map.get(key);
+    }
+}
+
+```
+
+
+
+#### 3、Redis 工具类
+
++ 序列化
+
+  ```java
+  package com.ilovesshan.wjhs.core.config;
+  
+  import com.alibaba.fastjson.JSON;
+  import org.springframework.beans.factory.annotation.Autowired;
+  import org.springframework.data.redis.core.RedisTemplate;
+  import org.springframework.stereotype.Component;
+  
+  import java.util.Set;
+  import java.util.concurrent.TimeUnit;
+  
+  @Component
+  public class RedisCache {
+  
+      @Autowired
+      private RedisTemplate<String, String> redisTemplate;
+  
+      public void set(String key, Object value, long timeout) {
+          redisTemplate.opsForValue().set(key, JSON.toJSONString(value), timeout, TimeUnit.MILLISECONDS);
+      }
+  
+      public void set(String key, Object value) {
+          redisTemplate.opsForValue().set(key, JSON.toJSONString(value));
+      }
+  
+      public <T> T get(String key, Class<T> clazz) {
+          return JSON.parseObject(redisTemplate.opsForValue().get(key), clazz);
+      }
+  
+      public void remove(String key) {
+          redisTemplate.delete(key);
+      }
+  
+      public Set<String> keys() {
+          return redisTemplate.keys(null);
+      }
+  
+      public Set<String> keys(String pattern) {
+          return redisTemplate.keys(pattern);
+      }
+  }
+  ```
+
+  
+
++ 常用方法封装
+
+  ```java
+  package com.ilovesshan.wjhs.core.config;
+  
+  import com.alibaba.fastjson.support.spring.GenericFastJsonRedisSerializer;
+  import org.springframework.context.annotation.Bean;
+  import org.springframework.context.annotation.Configuration;
+  import org.springframework.data.redis.connection.RedisConnectionFactory;
+  import org.springframework.data.redis.core.RedisTemplate;
+  import org.springframework.data.redis.serializer.RedisSerializer;
+  
+  @Configuration
+  public class RedisConfig {
+  
+      @Bean(name = "redisTemplate")
+      public RedisTemplate<String, Object> redisTemplate(RedisConnectionFactory factory) {
+          RedisTemplate<String, Object> template = new RedisTemplate<>();
+          // 使用fastjson进行序列化
+          RedisSerializer<Object> redisSerializer = new GenericFastJsonRedisSerializer();
+          template.setConnectionFactory(factory);
+          //key序列化方式
+          template.setKeySerializer(redisSerializer);
+          //value序列化
+          template.setValueSerializer(redisSerializer);
+          //value hashmap序列化
+          template.setHashValueSerializer(redisSerializer);
+          //key hashmap序列化
+          template.setHashKeySerializer(redisSerializer);
+          return template;
+      }
+  }
+  
+  ```
+
+  
+
+
+
+#### 4、Uuid工具类
+
+```java
+public class UuidUtil {
+    public static String generator() {
+        return UUID.randomUUID().toString().replace("-", "");
+    }
+}
+```
+
+
+
+#### 5、token工具类
+
+```java
+package com.ilovesshan.wjhs.utils;
+
+import com.ilovesshan.wjhs.contants.Constants;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.impl.DefaultClaims;
+
+import java.util.Date;
+
+public class JwtUtil {
+
+    // 生成token+
+    public static String generatorToken(String userId, String username) {
+        Claims claims = new DefaultClaims();
+        claims.put("userId", userId);
+        claims.put("username", username);
+        return Jwts.builder()
+                .setId(userId)
+                .setClaims(claims)
+                .signWith(SignatureAlgorithm.HS256, Constants.JWT_KEY.getBytes())
+                .setExpiration(new Date(System.currentTimeMillis() + Constants.JWT_EXPIRATION))
+                .compact();
+    }
+
+    // 获取Claims对象
+    public static Claims parseToken(String token) {
+        Claims claims = null;
+        try {
+            claims = Jwts.parser().setSigningKey(Constants.JWT_KEY.getBytes()).parseClaimsJws(token).getBody();
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new RuntimeException(e);
+        }
+        return claims;
+    }
+
+    // 获取用户Id
+    public static String getUserId(String token) {
+        return (String) parseToken(token).get("userId");
+    }
+
+
+    // 获取用户名
+    public static String getUsername(String token) {
+        return (String) parseToken(token).get("username");
+    }
+}
+```
+
+
+
+#### 6、HttpClient工具类
+
+```java
+package com.ilovesshan.wjhs.utils;
+
+
+import org.apache.http.NameValuePair;
+import org.apache.http.client.entity.UrlEncodedFormEntity;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.utils.URIBuilder;
+import org.apache.http.entity.ContentType;
+import org.apache.http.entity.StringEntity;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
+import org.apache.http.message.BasicNameValuePair;
+import org.apache.http.util.EntityUtils;
+
+import java.io.IOException;
+import java.net.URI;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
+
+public class HttpClientUtil {
+
+    public static String doGet(String url, Map<String, String> param) {
+
+        // 创建Httpclient对象
+        CloseableHttpClient httpclient = HttpClients.createDefault();
+
+        String resultString = "";
+        CloseableHttpResponse response = null;
+        try {
+            // 创建uri
+            URIBuilder builder = new URIBuilder(url);
+            if (param != null) {
+                for (String key : param.keySet()) {
+                    builder.addParameter(key, param.get(key));
+                }
+            }
+            URI uri = builder.build();
+
+            // 创建http GET请求
+            HttpGet httpGet = new HttpGet(uri);
+
+            // 执行请求
+            response = httpclient.execute(httpGet);
+            // 判断返回状态是否为200
+            if (response.getStatusLine().getStatusCode() == 200) {
+                resultString = EntityUtils.toString(response.getEntity(), "UTF-8");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                if (response != null) {
+                    response.close();
+                }
+                httpclient.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        return resultString;
+    }
+
+    public static String doGet(String url) {
+        return doGet(url, null);
+    }
+
+    public static String doPost(String url, Map<String, String> param) {
+        // 创建Httpclient对象
+        CloseableHttpClient httpClient = HttpClients.createDefault();
+        CloseableHttpResponse response = null;
+        String resultString = "";
+        try {
+            // 创建Http Post请求
+            HttpPost httpPost = new HttpPost(url);
+            // 创建参数列表
+            if (param != null) {
+                List<NameValuePair> paramList = new ArrayList<>();
+                for (String key : param.keySet()) {
+                    paramList.add(new BasicNameValuePair(key, param.get(key)));
+                }
+                // 模拟表单
+                UrlEncodedFormEntity entity = new UrlEncodedFormEntity(paramList);
+                httpPost.setEntity(entity);
+            }
+            // 执行http请求
+            response = httpClient.execute(httpPost);
+            resultString = EntityUtils.toString(response.getEntity(), "utf-8");
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                response.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
+        return resultString;
+    }
+
+    public static String doPost(String url) {
+        return doPost(url, null);
+    }
+
+    public static String doPostJson(String url, String json) {
+        // 创建Httpclient对象
+        CloseableHttpClient httpClient = HttpClients.createDefault();
+        CloseableHttpResponse response = null;
+        String resultString = "";
+        try {
+            // 创建Http Post请求
+            HttpPost httpPost = new HttpPost(url);
+            // 创建请求内容
+            StringEntity entity = new StringEntity(json, ContentType.APPLICATION_JSON);
+            httpPost.setEntity(entity);
+            // 执行http请求
+            response = httpClient.execute(httpPost);
+            resultString = EntityUtils.toString(response.getEntity(), "utf-8");
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                response.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
+        return resultString;
+    }
+}
+```
+
+
+
+#### 7、WxChatUtil 微信工具类
+
+```java
+package com.ilovesshan.wjhs.utils;
+
+
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
+
+import java.util.HashMap;
+import java.util.Map;
+
+public class WxChatUtil {
+    public static JSONObject getSessionKeyAndOpenId(String code) {
+        String requestUrl = "https://api.weixin.qq.com/sns/jscode2session";
+        Map<String, String> requestUrlParam = new HashMap<>();
+        // https://mp.weixin.qq.com/wxopen/devprofile?action=get_profile&token=164113089&lang=zh_CN
+        //小程序appId
+        requestUrlParam.put("appid", "wxbfbcf187cabc26d2");
+        //小程序secret
+        requestUrlParam.put("secret", "f0448294ad1c8ecc2863326fe081c7b0");
+        //小程序端返回的code
+        requestUrlParam.put("js_code", code);
+        //默认参数
+        requestUrlParam.put("grant_type", "authorization_code");
+        //发送post请求读取调用微信接口获取openid用户唯一标识
+        JSONObject jsonObject = JSON.parseObject(HttpClientUtil.doPost(requestUrl, requestUrlParam));
+        return jsonObject;
+    }
+}
+```
+
+
+
+#### 8、通用响应实体类
+
+```java
+package com.ilovesshan.wjhs.utils;
+
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.io.Serializable;
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class R implements Serializable {
+
+    private static final long serialVersionUID = 1946123740512009003L;
+
+
+    public static final int SUCCESS_CODE = 200;
+    public static final int ERROR_CODE_CLIENT = -200;
+    public static final int ERROR_CODE_AUTHORIZATION = 401;
+    public static final int ERROR_CODE_FORBIDDEN = 403;
+    public static final int ERROR_CODE_INTERNAL_SERVER = 500;
+
+
+    public static final String SUCCESS_MESSAGE = "操作成功";
+    public static final String SUCCESS_MESSAGE_SELECT = "查询成功";
+    public static final String SUCCESS_MESSAGE_INSERT = "新增成功";
+    public static final String SUCCESS_MESSAGE_DELETE = "删除成功";
+    public static final String SUCCESS_MESSAGE_UPDATE = "更新成功";
+
+    public static final String ERROR_MESSAGE = "操作失败";
+    public static final String ERROR_MESSAGE_SELECT = "查询失败";
+    public static final String ERROR_MESSAGE_INSERT = "新增失败";
+    public static final String ERROR_MESSAGE_DELETE = "删除失败";
+    public static final String ERROR_MESSAGE_UPDATE = "更新失败";
+
+    public static final String SUCCESS_MESSAGE_LOGIN = "登录成功";
+    public static final String ERROR_MESSAGE_LOGIN = "登录失败";
+
+    public static final String SUCCESS_MESSAGE_REGISTER = "注册成功";
+    public static final String ERROR_MESSAGE_REGISTER = "注册失败";
+
+    public static final String SUCCESS_MESSAGE_LOGOUT = "退出登录成功";
+    public static final String ERROR_MESSAGE_LOGOUT = "退出登录失败";
+
+    public static final String ERROR_MESSAGE_FORBIDDEN = "暂无权限访问/操作该资源";
+    public static final String ERROR_INSUFFICIENT_AUTHENTICATION = "身份认证失败，无效的令牌";
+    public static final String ERROR_WX_VALID_CODE = "无效的code,请到微信开发平台校验";
+
+    public static final String ERROR_USER_DISABLED = "账户不可用";
+    public static final String ERROR_USER_LOCKED = "账户锁定";
+    public static final String ERROR_USER_NAME_OR_PASSWORD = "用户名或者密码错误";
+    public static final String ERROR_USER_NOT_FOUND = "用户不存在";
+    public static final String ERROR_USER_ALREADY_EXIST = "用户已经存在";
+
+
+    private Integer code;
+    private String message;
+    private Object data;
+
+
+    public static R success() {
+        return R.builder().code(R.SUCCESS_CODE).message(R.SUCCESS_MESSAGE).build();
+    }
+
+    public static R success(String message) {
+        return R.builder().code(R.SUCCESS_CODE).message(message).build();
+    }
+
+    public static R success(Object data) {
+        return R.builder().code(R.SUCCESS_CODE).message(R.SUCCESS_MESSAGE).data(data).build();
+    }
+
+    public static R success(String message, Object data) {
+        return R.builder().code(R.SUCCESS_CODE).message(message).data(data).build();
+    }
+
+
+
+
+    public static R fail() {
+        return R.builder().code(R.ERROR_CODE_CLIENT).message(R.ERROR_MESSAGE).build();
+    }
+
+    public static R fail(String message) {
+        return R.builder().code(R.ERROR_CODE_CLIENT).message(message).build();
+    }
+
+    public static R fail(Object data) {
+        return R.builder().code(R.ERROR_CODE_CLIENT).message(R.ERROR_MESSAGE).data(data).build();
+    }
+
+    public static R fail(String message, Object data) {
+        return R.builder().code(R.ERROR_CODE_CLIENT).message(message).data(data).build();
+    }
+
+
+
+
+    public static R error() {
+        return R.builder().code(R.ERROR_CODE_INTERNAL_SERVER).message(R.ERROR_MESSAGE).build();
+    }
+
+    public static R error(String message) {
+        return R.builder().code(R.ERROR_CODE_INTERNAL_SERVER).message(message).build();
+    }
+
+    public static R error(Object data) {
+        return R.builder().code(R.ERROR_CODE_INTERNAL_SERVER).message(R.SUCCESS_MESSAGE).data(data).build();
+    }
+
+    public static R error(String message, Object data) {
+        return R.builder().code(R.ERROR_CODE_INTERNAL_SERVER).message(message).data(data).build();
+    }
+
+}
+```
+
+
+
+### 第四章、用户授权接口
+
+在之后的代码中：主要贴出controller和service代码、dao层基本就是编写sql语句，代码比较繁琐，详细代码请参考github。
+
+项目中对于各层之间的参数传递，采用了 `POJO，DTO,VO`等相关概念模型，同时使用了 ` mapstruct` 工具进行转换。
+
+
+
+#### 1、导入依赖
+
+```xml
+<!-- mapstruct 实体类映射工具-->
+<dependency>
+    <groupId>org.mapstruct</groupId>
+    <artifactId>mapstruct</artifactId>
+    <version>1.4.2.Final</version>
+</dependency>
+
+<dependency>
+    <groupId>org.mapstruct</groupId>
+    <artifactId>mapstruct-processor</artifactId>
+    <version>1.4.2.Final</version>
+</dependency>
+
+
+<!-- token -->
+<dependency>
+    <groupId>io.jsonwebtoken</groupId>
+    <artifactId>jjwt</artifactId>
+    <version>0.9.0</version>
+</dependency>
+
+
+<!-- Spring-Security 授权认证框架 -->
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-security</artifactId>
+</dependency>
+
+
+<!-- redis 缓存中间件 -->
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-data-redis</artifactId>
+</dependency>
+
+<!-- fastjson -->
+<dependency>
+    <groupId>com.alibaba</groupId>
+    <artifactId>fastjson</artifactId>
+    <version>1.2.68</version>
+</dependency>
+
+
+<!-- HTTP协议的客户端编程工具包 -->
+<dependency>
+    <groupId>org.apache.httpcomponents</groupId>
+    <artifactId>httpclient</artifactId>
+    <version>4.5.2</version>
+</dependency>
+```
+
+
+
+#### 2、常量配置
+
+```java
+package com.ilovesshan.wjhs.contants;
+
+public class Constants {
+    // JWT有效期(1天)
+    public static final Long JWT_EXPIRATION = 1000 * 60 * 60 * 24L;
+
+    // JWT令牌信息
+    public static final String JWT_KEY = "RANDOM";
+
+    // 请求头键
+    public static final String HEADER_KEY = "Authorization";
+
+    // 请求头值(前缀)
+    public static final String HEADER_VALUE_PREFIX = "Bearer ";
+
+    // redis中缓存用户信息(前缀)
+    public static final String REDIS_USER_PREFIX = "user:";
+
+}
+```
+
+
+
+#### 3、更新用户密码sql脚本
+
+更新原因：后面我们会集成`sprngSecury`框架，在框架内部有属于它自己的一套加密和解密方式，我们在 `V20221124.02__init_table_data.sql` 文件中初始化数据时，填写的是明文，这里需要更新一下对明文加密让`SprngSecury` 能够解密通过。
+
+```tex
+admin初始密码：123456
+加密密码：$2a$10$qom4A1SQa/3KZ7i3jjcTEeaCvzgvY5ltLFAsTIbWgsm1d0r157igG
+
+sunlei初始密码：sunlei123456!@#
+加密密码：$2a$10$7j7FH4Se1XWFmFKdzkmLiOefINkgnkIRiRh4JyYLk/sNfjey7exMS
+
+ilovesshan初始密码：ilovesshan123456!@#
+加密密码：$2a$10$HTPriYJPJoiTNgkD/1vLduHNKb8fWgMvHKqK0AZwYHtYKbGeD2IHi
+```
+
+
+
+新增脚本名称：`V20221202.01__update_user_password.sql`
+
+```sql
+update
+    `user`
+set
+    password = '$2a$10$qom4A1SQa/3KZ7i3jjcTEeaCvzgvY5ltLFAsTIbWgsm1d0r157igG'
+where
+    id = '369BCFE480454D22A07A8644F6DF0349';
+
+
+
+update
+    `user`
+set
+    password = '$2a$10$7j7FH4Se1XWFmFKdzkmLiOefINkgnkIRiRh4JyYLk/sNfjey7exMS'
+where
+    id = 'ADBD5F0E46474696B65140568E43385E';
+
+
+
+    update
+        `user`
+    set
+        password = '$2a$10$HTPriYJPJoiTNgkD/1vLduHNKb8fWgMvHKqK0AZwYHtYKbGeD2IHi'
+    where
+        id = 'F2532E33786F4B8D9FA2DB00F03352FB';
+```
+
+
+
+#### 4、用户登录接口
+
+```java
+@Data
+public class UserAuthDto {
+    @NotNull(message = "用户名不能为空")
+    @Size(max = 24, min = 4, message = "用户名长度在4到24个字符之间")
+    private String username;
+    @NotNull(message = "密码不能为空")
+    @Size(max = 32, min = 6, message = "密码长度在6到32个字符之间")
+    private String password;
+}
+```
+
+```java
+@Component
+@Mapper(componentModel = "spring")
+public interface UserConverter {
+    UserVo po2vo(User user);
+}
+```
+
+```java
+package com.ilovesshan.wjhs.controller;
+
+import com.ilovesshan.wjhs.beans.dto.UserAuthDto;
+import com.ilovesshan.wjhs.service.AuthService;
+import com.ilovesshan.wjhs.utils.JwtUtil;
+import com.ilovesshan.wjhs.utils.R;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.HashMap;
+
+@Api(tags = "授权模块")
+@RestController
+@RequestMapping("/auth")
+public class AuthController {
+
+    @Autowired
+    private AuthService authService;
+
+    @ApiOperation("用户授权")
+    @PostMapping
+    public R auth(@Validated @RequestBody UserAuthDto userAuthDto) {
+        String token = authService.auth(userAuthDto);
+        HashMap<String, String> data = new HashMap<>();
+        data.put("id", JwtUtil.getUserId(token));
+        data.put("username", userAuthDto.getUsername());
+        data.put("token", token);
+        return R.success(R.SUCCESS_MESSAGE_LOGIN, data);
+    }
+
+    @ApiOperation("用户注销")
+    @DeleteMapping
+    public R logout() {
+        authService.logout();
+        return R.success(R.SUCCESS_MESSAGE_LOGOUT);
+    }
+}
+```
+
+```java
+package com.ilovesshan.wjhs.service.impl;
+
+import com.ilovesshan.wjhs.beans.dto.UserAuthDto;
+import com.ilovesshan.wjhs.beans.pojo.AuthUser;
+import com.ilovesshan.wjhs.contants.Constants;
+import com.ilovesshan.wjhs.core.base.UserCache;
+import com.ilovesshan.wjhs.core.config.RedisCache;
+import com.ilovesshan.wjhs.core.exception.AuthorizationException;
+import com.ilovesshan.wjhs.service.AuthService;
+import com.ilovesshan.wjhs.utils.JwtUtil;
+import com.ilovesshan.wjhs.utils.R;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.stereotype.Service;
+
+import java.util.Objects;
+
+
+@Service
+@Slf4j
+public class AuthServiceImpl implements AuthService {
+
+    @Autowired
+    private RedisCache redisCache;
+
+    @Autowired
+    private AuthenticationManager authenticationManager;
+
+    @Override
+    public String auth(UserAuthDto userAuthDto) {
+        // 封装一个Authentication对象 交给authenticationManager去进去认证
+        Authentication authenticationToken = new UsernamePasswordAuthenticationToken(userAuthDto.getUsername(), userAuthDto.getPassword());
+        Authentication authenticate = authenticationManager.authenticate(authenticationToken);
+
+        // 如果为空 表示认证失败了
+        if (Objects.isNull(authenticate)) {
+            throw new AuthorizationException(R.ERROR_USER_NAME_OR_PASSWORD);
+        }
+
+        // 取出用户信息
+        AuthUser principal = (AuthUser) authenticate.getPrincipal();
+
+        // 将用户登录信息存在redis中
+        String userId = principal.getUser().getId();
+        redisCache.set(Constants.REDIS_USER_PREFIX + userId, principal, Constants.JWT_EXPIRATION);
+
+        // 校验通过 返回Token
+        return JwtUtil.generatorToken(userId, principal.getUsername());
+    }
+
+    @Override
+    public void logout() {
+        String userId = UserCache.get("userId");
+        String username = UserCache.get("username");
+
+        // 从redis中删除用户信息
+        redisCache.remove(Constants.REDIS_USER_PREFIX + userId);
+
+        log.debug("{}退出登录, 用户ID: {}", username, userId);
+    }
+}
+
+```
+
+
+
+#### 5、小程序登录接口
+
+```java
+package com.ilovesshan.wjhs.controller;
+
+import com.ilovesshan.wjhs.beans.converter.WxUserConverter;
+import com.ilovesshan.wjhs.beans.pojo.WxUser;
+import com.ilovesshan.wjhs.service.WxAuthService;
+import com.ilovesshan.wjhs.utils.R;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+
+@Api(tags = "小程序授权模块")
+@RestController
+@RequestMapping("/wx/auth")
+public class WxAuthController {
+
+    @Autowired
+    private WxAuthService wxAuthService;
+
+    @Autowired
+    private WxUserConverter wxUserConverter;
+
+    @ApiOperation("授权")
+    @PostMapping
+    public R auth(@RequestParam(value = "code", required = false) String code) {
+        WxUser wxUser = wxAuthService.auth(code);
+        return R.success(R.SUCCESS_MESSAGE_LOGIN, wxUserConverter.po2AuthVo(wxUser));
+    }
+}
+```
+
+```java
+package com.ilovesshan.wjhs.service.impl;
+
+import com.alibaba.fastjson.JSONObject;
+import com.ilovesshan.wjhs.beans.pojo.WxUser;
+import com.ilovesshan.wjhs.core.exception.AuthorizationException;
+import com.ilovesshan.wjhs.service.WxAuthService;
+import com.ilovesshan.wjhs.service.WxUserService;
+import com.ilovesshan.wjhs.utils.R;
+import com.ilovesshan.wjhs.utils.UuidUtil;
+import com.ilovesshan.wjhs.utils.WxChatUtil;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
+
+import java.util.Date;
+import java.util.Objects;
+
+@Service
+public class WxAuthServiceImpl implements WxAuthService {
+
+    @Autowired
+    private WxUserService wxUserService;
+
+    @Override
+    public WxUser auth(String code) {
+        // 获取sessionKey和openId
+        JSONObject SessionKeyOpenId = WxChatUtil.getSessionKeyAndOpenId(code);
+        String openid = SessionKeyOpenId.getString("openid");
+        String sessionKey = SessionKeyOpenId.getString("session_key");
+
+        // 如果sessionKey或者openId无效
+        if (!StringUtils.hasText(openid) || !StringUtils.hasText(sessionKey)) {
+            throw new AuthorizationException(R.ERROR_WX_VALID_CODE);
+        }
+
+        // 根据openid去数据库查询、不存在就是新用户 存在就更新登录时间
+        WxUser selectedUser = wxUserService.findUserByOpenId(openid);
+        if (Objects.isNull(selectedUser)) {
+            WxUser wxUser = new WxUser();
+            wxUser.setId(UuidUtil.generator());
+            wxUser.setOpenId(openid);
+            wxUser.setSessionKey(sessionKey);
+            wxUser.setSkey(UuidUtil.generator());
+            wxUser.setLastVisitTime(new Date());
+            wxUserService.insert(wxUser);
+            return wxUser;
+        } else {
+            // 更新最后登录时间
+            selectedUser.setLastVisitTime(new Date());
+            wxUserService.update(selectedUser);
+            return selectedUser;
+        }
+    }
+}
+
+```
+
+
+
+#### 5、集成Redis
+
++ 配置Redis连接环境
+
+  ```yaml
+  spring
+    # redis 配置
+    redis:
+      port: ${REDIS_PORT}
+      host: ${REDIS_HOST}
+  ```
+
+  ```yaml
+  # application-dev.yml
+  REDIS_HOST: localhost
+  REDIS_PORT: 6379
+  ```
+
+
+
+#### 6、集成SecurityConfig 
+
++ SecurityConfig 配置文件
+
+  ```java
+  package com.ilovesshan.wjhs.core.config;
+  
+  import com.ilovesshan.wjhs.core.filter.JwtAuthenticationFilter;
+  import com.ilovesshan.wjhs.core.handler.AuthenticationEntryPointHandler;
+  import org.springframework.beans.factory.annotation.Autowired;
+  import org.springframework.context.annotation.Bean;
+  import org.springframework.context.annotation.Configuration;
+  import org.springframework.http.HttpMethod;
+  import org.springframework.security.authentication.AuthenticationManager;
+  import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+  import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
+  import org.springframework.security.config.http.SessionCreationPolicy;
+  import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+  import org.springframework.security.crypto.password.PasswordEncoder;
+  import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+  
+  
+  @Configuration
+  public class SecurityConfig extends WebSecurityConfigurerAdapter {
+  
+      @Autowired
+      private JwtAuthenticationFilter jwtAuthenticationFiler;
+  
+      @Autowired
+      private AuthenticationEntryPointHandler authenticationEntryPointHandler;
+  
+      @Bean
+      public PasswordEncoder passwordEncoder() {
+          return new BCryptPasswordEncoder();
+      }
+  
+  
+      @Override
+      protected void configure(HttpSecurity http) throws Exception {
+          http
+                  .csrf().disable()
+                  .cors()
+                  .and().sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS);
+  
+  
+          http.authorizeRequests()
+                  .antMatchers("/doc.html", "/webjars/**", "/img.icons/**", "/swagger-resources/**", "/v2/api-docs").permitAll()
+                  .antMatchers("/").permitAll()
+                  .antMatchers("/wx/**").permitAll()
+                  .antMatchers(HttpMethod.POST, "/auth").permitAll()
+                  .antMatchers(HttpMethod.GET, "/upload/**").permitAll()
+                  .antMatchers(HttpMethod.GET, "/systemDict").permitAll()
+                  .anyRequest().authenticated();
+  
+          http
+                  .addFilterAfter(jwtAuthenticationFiler, UsernamePasswordAuthenticationFilter.class)
+                  .exceptionHandling()
+                  .authenticationEntryPoint(authenticationEntryPointHandler);
+      }
+  
+  
+      @Bean
+      @Override
+      public AuthenticationManager authenticationManagerBean() throws Exception {
+          return super.authenticationManagerBean();
+      }
+  }
+  ```
+
+  
+
++ JwtAuthenticationFilter 认证过滤器
+
+  ```java
+  package com.ilovesshan.wjhs.core.filter;
+  
+  import com.ilovesshan.wjhs.beans.pojo.AuthUser;
+  import com.ilovesshan.wjhs.contants.Constants;
+  import com.ilovesshan.wjhs.core.base.UserCache;
+  import com.ilovesshan.wjhs.core.config.RedisCache;
+  import com.ilovesshan.wjhs.core.exception.AuthorizationException;
+  import com.ilovesshan.wjhs.utils.JwtUtil;
+  import com.ilovesshan.wjhs.utils.R;
+  import org.springframework.beans.factory.annotation.Autowired;
+  import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+  import org.springframework.security.core.Authentication;
+  import org.springframework.security.core.context.SecurityContextHolder;
+  import org.springframework.stereotype.Component;
+  import org.springframework.util.StringUtils;
+  import org.springframework.web.filter.OncePerRequestFilter;
+  
+  import javax.servlet.FilterChain;
+  import javax.servlet.ServletException;
+  import javax.servlet.http.HttpServletRequest;
+  import javax.servlet.http.HttpServletResponse;
+  import java.io.IOException;
+  import java.util.Collections;
+  import java.util.Objects;
+  
+  
+  @Component
+  public class JwtAuthenticationFilter extends OncePerRequestFilter {
+  
+      @Autowired
+      private RedisCache redisCache;
+  
+      @Override
+      protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
+          String authorization = request.getHeader(Constants.HEADER_KEY);
+          // 不存在token或者是非法token
+          if (!StringUtils.hasText(authorization) || authorization.replace("Bearer", "").length() == 0) {
+              filterChain.doFilter(request, response);
+              return;
+          }
+  
+          String userId = JwtUtil.getUserId(authorization.replace(Constants.HEADER_VALUE_PREFIX, ""));
+  
+          // 去redis中查询用户信息
+          AuthUser authUser = redisCache.get(Constants.REDIS_USER_PREFIX + userId, AuthUser.class);
+  
+          if (Objects.isNull(authUser)) {
+              throw new AuthorizationException(R.ERROR_INSUFFICIENT_AUTHENTICATION);
+          }
+  
+          // 将用户信息保存在SecurityContext中
+          Authentication authenticationToken = new UsernamePasswordAuthenticationToken(authUser, null, Collections.emptyList());
+          SecurityContextHolder.getContext().setAuthentication(authenticationToken);
+  
+          // 将当前用户ID和用户名称存在UserCache中 方便在任意地方获取
+          UserCache.set("userId", userId);
+          UserCache.set("username", authUser.getUsername());
+  
+          // 放行 执行下一个过滤器
+          filterChain.doFilter(request, response);
+      }
+  }
+  ```
+
+#### 7、获取用户信息接口
+
+```java
+@Api(tags = "用户模块")
+@RestController
+@RequestMapping("/users")
+public class UserController {
+
+    @Autowired
+    private UserService userService;
+
+    @Autowired
+    private UserConverter userConverter;
+
+
+    @ApiOperation("根据ID获取用户信息")
+    @GetMapping("/{id}")
+    public R selectById(@PathVariable String id) {
+        User user = userService.findUserById(id);
+        return R.success(R.SUCCESS_MESSAGE_SELECT, userConverter.po2vo(user));
+    }
+}
+```
+
+
+
+#### 8、小程序用户信息接口
+
+```java
+@Api(tags = "小程序用户模块")
+@RestController
+@RequestMapping("/wx/users")
+public class WxUserController {
+
+    @Autowired
+    private WxUserService wxUserService;
+
+    @Autowired
+    private WxUserConverter wxUserConverter;
+
+    @ApiOperation("根据ID获取用户信息")
+    @GetMapping("/{id}")
+    public R auth(@PathVariable String id) {
+        WxUser wxUser = wxUserService.findUserById(id);
+        return R.success(R.SUCCESS_MESSAGE_SELECT, wxUserConverter.po2vo(wxUser));
+    }
+
+    @ApiOperation("更新用户信息")
+    @PostMapping
+    public R update(@Validated @RequestBody WxUserUpdateDto wxUserUpdateDto) {
+        boolean isSuccess = wxUserService.update(wxUserConverter.dto2po(wxUserUpdateDto));
+        return isSuccess ? R.success(R.SUCCESS_MESSAGE_UPDATE) : R.fail(R.SUCCESS_MESSAGE_UPDATE);
+    }
+}
+```
+
+
+
+### 第五章、数据字典接口
+
+#### 1、获取数据字典
+
+```java
+@Api(tags = "字典模块")
+@RestController
+@RequestMapping("/systemDict")
+public class SystemDictController {
+
+    @Autowired
+    private SystemDictService systemDictService;
+
+    @Autowired
+    private SystemDictConverter systemDictConverter;
+
+    @GetMapping
+    @ApiOperation("查询字典列表")
+    public R selectAll() {
+        List<SystemDict> systemDicts = systemDictService.selectAll();
+        List<SystemDictVo> systemDictVos = systemDicts.stream().map(systemDict -> systemDictConverter.po2vo(systemDict)).collect(Collectors.toList());
+        return R.success(R.SUCCESS_MESSAGE_SELECT, systemDictVos);
     }
 }
 ```
