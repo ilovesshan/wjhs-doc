@@ -141,32 +141,34 @@ export default new Cache()
 ```typescript
 import Cache from "../utils/cache"
 
-const BASE_URL: string = "https://32f38232.cpolar.cn";
+const BASE_URL: string = "http://114.55.32.234:8127";
 
 type ALLOW_METHODS = "OPTIONS" | "GET" | "HEAD" | "POST" | "PUT" | "DELETE" | "TRACE" | "CONNECT";
 type ALLOW_DATA = string | Map<String, any> | ArrayBuffer | any;
 
 
-const get = (uri: string, query?: ALLOW_DATA): Promise<any> => {
-  return baseRequest(uri, "GET", query);
+const get = (uri: string, query?: ALLOW_DATA, loading: boolean = true): Promise<any> => {
+  return baseRequest(uri, "GET", query, loading);
 }
 
-const post = (uri: string, data?: ALLOW_DATA): Promise<any> => {
-  return baseRequest(uri, "POST", data);
+const post = (uri: string, data?: ALLOW_DATA, loading: boolean = true): Promise<any> => {
+  return baseRequest(uri, "POST", data, loading);
 }
 
-const put = (uri: string, data?: ALLOW_DATA): Promise<any> => {
-  return baseRequest(uri, "PUT", data);
+const put = (uri: string, data?: ALLOW_DATA, loading: boolean = true): Promise<any> => {
+  return baseRequest(uri, "PUT", data, loading);
 }
 
-const delete_ = (uri: string, data?: ALLOW_DATA): Promise<any> => {
-  return baseRequest(uri, "DELETE", data);
+const delete_ = (uri: string, data?: ALLOW_DATA, loading: boolean = true): Promise<any> => {
+  return baseRequest(uri, "DELETE", data, loading);
 }
 
 
-const baseRequest = (uri: string, method: ALLOW_METHODS, data?: ALLOW_DATA): Promise<any> => {
+const baseRequest = (uri: string, method: ALLOW_METHODS, data?: ALLOW_DATA, loading: boolean = true): Promise<any> => {
   return new Promise((resolve, reject) => {
-    wx.showLoading({ title: "加载中..." })
+    if (loading) {
+      wx.showLoading({ title: "加载中..." })
+    }
     wx.request({
       url: `${BASE_URL}${uri}`,
       method,
@@ -176,20 +178,32 @@ const baseRequest = (uri: string, method: ALLOW_METHODS, data?: ALLOW_DATA): Pro
       },
       success: res => {
         if (res.statusCode == 200) {
-          resolve(res)
+          resolve(res.data)
         } else {
           // 请求失败情况(业务逻辑)
           if (res.statusCode == 401) {
             // 未授权
-            wx.showToast({ title: "授权信息过期，请重新登录授权", icon: "none" })
+            if ((res.data as any).message != null) {
+              wx.showToast({ title: (res.data as any).message, icon: "none" });
+            } else {
+              wx.showToast({ title: "授权信息过期，请重新登录授权", icon: "none" })
+            }
+          } else {
+            wx.showToast({ title: "服务器繁忙" + ((res.data as any).error || (res.data as any)), icon: "none" })
           }
+          reject(res);
         }
       },
       fail: err => {
+        wx.showToast({ title: "服务器繁忙，请稍后再试", icon: "none" })
         console.log(err);
         reject(err);
       },
-      complete: () => wx.hideLoading()
+      complete: () => {
+        if (loading) {
+          wx.hideLoading()
+        }
+      }
     })
   });
 }
@@ -200,3 +214,172 @@ export {
 }
 ```
 
+
+
+### 第三章、登录和Tabbar搭建
+
+#### 1、Tabbar搭建
+
+采用官方默认 `tabBar` 配置来构建，如果不使用默认的Tabbar样式风格，也可以进行自定义。下面贴出完整`app.json` 文件内容。
+
+```json
+{
+  "pages": [
+    // 登录页(授权) 
+    "pages/auth/auth",
+    // 首页 
+    "pages/home/home",
+    // 回收分类 
+    "pages/category/category",
+    // 快速预约 
+    "pages/appointment/appointment",
+    // 我的 
+    "pages/profile/profile"
+  ],
+  "window": {
+    "backgroundTextStyle": "light",
+    "navigationBarBackgroundColor": "#fff",
+    "navigationBarTitleText": "网捷回收",
+    "navigationBarTextStyle": "black"
+  },
+  "tabBar": {
+    // 自定义需要改成 true
+    // 在跟目录新建一个自定义组件custom-tab-bar(名字不能错)
+    "custom": false,
+    "list": [{
+        "pagePath": "pages/home/home",
+        "text": "首页",
+        "iconPath": "/assets/images/tabbar/home.png",
+        "selectedIconPath": "/assets/images/tabbar/home-active.png"
+      },
+      {
+        "pagePath": "pages/category/category",
+        "text": "回收分类",
+        "iconPath": "/assets/images/tabbar/category.png",
+        "selectedIconPath": "/assets/images/tabbar/category-active.png"
+      },
+      {
+        "pagePath": "pages/appointment/appointment",
+        "text": "快速预约",
+        "iconPath": "/assets/images/tabbar/appointment.png",
+        "selectedIconPath": "/assets/images/tabbar/appointment-active.png"
+      },
+      {
+        "pagePath": "pages/profile/profile",
+        "text": "我的",
+        "iconPath": "/assets/images/tabbar/profile.png",
+        "selectedIconPath": "/assets/images/tabbar/profile-active.png"
+      }
+    ]
+  },
+  "sitemapLocation": "sitemap.json"
+}
+```
+
+
+
+#### 2、授权功能
+
++ 实现思路：
+
+  通过调用`wx.login()` 获取到code之后，携带code带后端服务器进行校验，校验成功后端会返回`openID、sessionKey、skey` 等信息，同时也会返回当前用户的ID，可以通过ID去获取用户的一些基本信息，客户端保存`openID`，之后请求是都携带上即可。
+
+
+
++ API方法封装
+
+  ```typescript
+  import { get, post } from "./request";
+  
+  // 获取openID接口
+  export function requestOpenId(code: string) {
+    return post(`/wx/auth?code=${code}`, {}, false)
+  }
+  
+  // 获用户信息接口
+  export function requestUserInfo(userId: string) {
+    return get(`/wx/users/${userId}`, {}, false)
+  }
+  ```
+
+  
+
++ 界面使用到了 `van-loading` 和 `van-empty`组件，做一个引入。
+
+  ```json
+  {
+    "usingComponents": {
+      "van-loading": "@vant/weapp/loading/index",
+      "van-empty": "@vant/weapp/empty/index"
+    }
+  }
+  ```
+
+  
+
++ 界面代码
+
+  ```html
+  <view class="auth-container">
+    <van-loading wx:if="{{ isloading }}" type="spinner" size="50" />
+    <van-empty bindtap="tologin" wx:else="" image="error" description="轻触重新加载" />
+  </view>
+  ```
+
+  ```less
+  .auth-container{
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  ```
+
+  
+
++ 逻辑代码
+
+  ```typescript
+  import { requestOpenId, requestUserInfo } from "../../api/apis";
+  import Cache from "../../utils/cache";
+  
+  Page({
+    data: {
+      isLoading: false,
+    },
+    onLoad() {
+      this.tologin();
+    },
+  
+    tologin() {
+      this.setData({ isloading: true })
+      // 登录
+      wx.login({
+        success: response => {
+          console.log(response.code)
+          requestOpenId(response.code).then(res => {
+            if (res.code === 200) {
+              Cache.set("userId", res.data.id);
+              Cache.set("openId", res.data.openId);
+  
+              // 获取用户信息
+              requestUserInfo(res.data.id).then(res => {
+                console.log(res);
+              })
+  
+              // 跳到首页
+              wx.switchTab({
+                url: "/pages/home/home",
+              })
+            }
+          }, error => {
+            this.setData({ isloading: false })
+          })
+        },
+      })
+    }
+  })
+  ```
+
+  
