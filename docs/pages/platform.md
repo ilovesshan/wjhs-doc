@@ -164,23 +164,38 @@
   npm install pinia
   ```
 
-+ 添加pinia相关文件
++ 添加pinia相关文件，采用分模块
 
   在项目`src`目录下建立`store/index.ts` 文件
 
   ```typescript
-  import { defineStore } from "pinia";
+  import userModule from "./modules/user"
   
-  const rootStore = defineStore("rootStore", {
-    state() {
+  // 用户模块
+  const userStore = userModule();
+  
+  export {
+    userStore
+  }
+  ```
+
+  在项目`src`目录下建立`store/modules/user.ts` 文件
+
+  ```typescript
+  import { defineStore } from "pinia";
+  import { SCache } from "../../utils/cache";
+  
+  const rootStore = defineStore("userStore", {
+    state(): IUserStore {
       return {
-        name: "ilovesshan"
+          name:"ilovesshan"
       }
     },
+  
     getters: {},
+  
     actions: {}
   });
-  
   
   export default rootStore;
   ```
@@ -201,6 +216,14 @@
   app.use(createPinia())
   app.mount("#app");
   
+  ```
+
+  界面中使用store中的数据
+
+  ```typescript
+  import { userStore } from "../../store/index"
+  
+  const username = computed(()=> userStore.name);
   ```
 
   
@@ -286,11 +309,11 @@
   
   const ServiceConfig: IServiceConfig = {
     devProxyBaseUrl: "/api/wjhs",
-    devBaseUrl: "http://localhost",
+    devBaseUrl: "http://localhost:80",
     devTimeout: 15000,
   
     prodProxyBaseUrl: "/api/wjhs",
-    prodBaseUrl: "https://xxxx.com",
+    prodBaseUrl: "http://114.55.32.234:8127",
     prodTimeout: 5000,
   }
   
@@ -356,7 +379,7 @@
   import ServiceConfig from "../config/serviceConfig"
   
   import router from "../router"
-  import { LCache } from "../utils/cache"
+  import { LCache, SCache } from "../utils/cache"
   
   const baseConfig: AxiosRequestConfig = {
     baseURL: import.meta.env.MODE == "development" ? ServiceConfig.devBaseUrl : ServiceConfig.prodBaseUrl,
@@ -379,7 +402,7 @@
     loadingInstance = ElLoading.service({ lock: true, text: '拼命加载中...', background: 'rgba(0, 0, 0, 0.7)', });
   
     // 添加token信息
-    config.headers!["Authorization"] = LCache.get("token");
+    config.headers!["Authorization"] = SCache.get("token");
   
     // 添加时间戳
     config.url += `?t=${new Date().getTime()}`
@@ -390,31 +413,35 @@
       loadingInstance.close();
       ElMessage({ message: "请求失败,请联系网站管理员", type: 'error' });
       console.log(error);
-    });
+  });
   
   
   // 响应拦截器
   instance.interceptors.response.use(response => {
     // 关闭loading
     loadingInstance.close();
-    return response.data;
+    return response;
   },
     error => {
       // 关闭loading
       loadingInstance.close();
       if (error.response && error.response.status == 301) {
-        // 后期优化
         router.push("/login");
         ElMessage({ message: error.response.data.message, type: 'error' });
       } else {
         ElMessage({ message: "请求失败,请联系网站管理员", type: 'error' });
       }
-    });
+  });
   
   const request = async<T = any>(config: AxiosRequestConfig): Promise<CusResponse<T>> => {
     return new Promise(async (resolve, reject) => {
-      const data = await instance.request<CusResponse<T>>(config);
-      resolve(data.data);
+      const res = await instance.request<CusResponse<T>>(config);
+      const { code, message, data } = res.data;
+      if(code == 200){
+        resolve(res.data)
+      }else{
+        ElMessage({ message, type: 'error' });
+      }
     });
   }
   
@@ -422,9 +449,9 @@
   ```
 
   
-
+  
   用法
-
+  
   ```vue
   <script setup lang="ts">
       import request from "./api/request";
@@ -439,6 +466,885 @@
   
   </script>
   ```
+  
+  
+
+### 第三章、路由和Layout布局
+
+#### 1、404页面
+
+```vue
+<template>
+  <div class="wscn-http404-container">
+    <div class="wscn-http404">
+      <div class="pic-404">
+        <img class="pic-404__parent" src="@/assets/images/404_images/404.png" alt="404">
+        <img class="pic-404__child left" src="@/assets/images/404_images/404_cloud.png" alt="404">
+        <img class="pic-404__child mid" src="@/assets/images/404_images/404_cloud.png" alt="404">
+        <img class="pic-404__child right" src="@/assets/images/404_images/404_cloud.png" alt="404">
+      </div>
+      <div class="bullshit">
+        <div class="bullshit__headline">{{ message }}</div>
+        <div class="bullshit__info">{{ subMessage }}</div>
+        <a href="/" class="bullshit__return-home">Back to home</a>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script lang="ts" setup >
+import { ref } from 'vue';
+
+const message = ref<string>("The webmaster said that you can not enter this page...")
+const subMessage = ref<string>("Please check that the URL you entered is correct, or click the button below to return to the homepage.")
+
+</script>
+
+<style lang="scss" scoped>
+.wscn-http404-container {
+  transform: translate(-50%, -50%);
+  position: absolute;
+  top: 40%;
+  left: 50%;
+}
+
+.wscn-http404 {
+  position: relative;
+  width: 1200px;
+  padding: 0 50px;
+  overflow: hidden;
+
+  .pic-404 {
+    position: relative;
+    float: left;
+    width: 600px;
+    overflow: hidden;
+
+    &__parent {
+      width: 100%;
+    }
+
+    &__child {
+      position: absolute;
+
+      &.left {
+        width: 80px;
+        top: 17px;
+        left: 220px;
+        opacity: 0;
+        animation-name: cloudLeft;
+        animation-duration: 2s;
+        animation-timing-function: linear;
+        animation-fill-mode: forwards;
+        animation-delay: 1s;
+      }
+
+      &.mid {
+        width: 46px;
+        top: 10px;
+        left: 420px;
+        opacity: 0;
+        animation-name: cloudMid;
+        animation-duration: 2s;
+        animation-timing-function: linear;
+        animation-fill-mode: forwards;
+        animation-delay: 1.2s;
+      }
+
+      &.right {
+        width: 62px;
+        top: 100px;
+        left: 500px;
+        opacity: 0;
+        animation-name: cloudRight;
+        animation-duration: 2s;
+        animation-timing-function: linear;
+        animation-fill-mode: forwards;
+        animation-delay: 1s;
+      }
+
+      @keyframes cloudLeft {
+        0% {
+          top: 17px;
+          left: 220px;
+          opacity: 0;
+        }
+
+        20% {
+          top: 33px;
+          left: 188px;
+          opacity: 1;
+        }
+
+        80% {
+          top: 81px;
+          left: 92px;
+          opacity: 1;
+        }
+
+        100% {
+          top: 97px;
+          left: 60px;
+          opacity: 0;
+        }
+      }
+
+      @keyframes cloudMid {
+        0% {
+          top: 10px;
+          left: 420px;
+          opacity: 0;
+        }
+
+        20% {
+          top: 40px;
+          left: 360px;
+          opacity: 1;
+        }
+
+        70% {
+          top: 130px;
+          left: 180px;
+          opacity: 1;
+        }
+
+        100% {
+          top: 160px;
+          left: 120px;
+          opacity: 0;
+        }
+      }
+
+      @keyframes cloudRight {
+        0% {
+          top: 100px;
+          left: 500px;
+          opacity: 0;
+        }
+
+        20% {
+          top: 120px;
+          left: 460px;
+          opacity: 1;
+        }
+
+        80% {
+          top: 180px;
+          left: 340px;
+          opacity: 1;
+        }
+
+        100% {
+          top: 200px;
+          left: 300px;
+          opacity: 0;
+        }
+      }
+    }
+  }
+
+  .bullshit {
+    position: relative;
+    float: left;
+    width: 300px;
+    padding: 30px 0;
+    overflow: hidden;
+
+    &__oops {
+      font-size: 32px;
+      font-weight: bold;
+      line-height: 40px;
+      color: #1482f0;
+      opacity: 0;
+      margin-bottom: 20px;
+      animation-name: slideUp;
+      animation-duration: 0.5s;
+      animation-fill-mode: forwards;
+    }
+
+    &__headline {
+      font-size: 20px;
+      line-height: 24px;
+      color: #222;
+      font-weight: bold;
+      opacity: 0;
+      margin-bottom: 10px;
+      animation-name: slideUp;
+      animation-duration: 0.5s;
+      animation-delay: 0.1s;
+      animation-fill-mode: forwards;
+    }
+
+    &__info {
+      font-size: 13px;
+      line-height: 21px;
+      color: grey;
+      opacity: 0;
+      margin-bottom: 30px;
+      animation-name: slideUp;
+      animation-duration: 0.5s;
+      animation-delay: 0.2s;
+      animation-fill-mode: forwards;
+    }
+
+    &__return-home {
+      display: block;
+      float: left;
+      width: 110px;
+      height: 36px;
+      background: #1482f0;
+      border-radius: 100px;
+      text-align: center;
+      color: #ffffff;
+      opacity: 0;
+      font-size: 14px;
+      line-height: 36px;
+      cursor: pointer;
+      animation-name: slideUp;
+      animation-duration: 0.5s;
+      animation-delay: 0.3s;
+      animation-fill-mode: forwards;
+    }
+
+    @keyframes slideUp {
+      0% {
+        transform: translateY(60px);
+        opacity: 0;
+      }
+
+      100% {
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
+  }
+}
+</style>
+```
+
+
+
+#### 2、路由配置
+
+路由中涉及的界面请自行创建、也可以参考项目源码。
+
+```typescript
+import { createRouter, createWebHistory } from "vue-router"
+import type { RouteRecordRaw } from "vue-router"
+
+const dynamicRoutes: RouteRecordRaw[] = [
+];
+
+const commonRoutes: RouteRecordRaw[] = [
+  {
+    path: "/",
+    redirect: "/home",
+    component: () => import("@/views/layout/index.vue"),
+    children: [
+      {
+        path: "/home",
+        name: "home",
+        meta: { title: "首页", icon: "home" },
+        component: () => import("@/views/home/index.vue"),
+      },
+      {
+        path: "/system",
+        name: "system",
+        redirect:"/swiper",
+        meta: { title: "系统管理", icon: "system" },
+        component: () => import("@/views/system/index.vue"),
+        children:[
+          {
+            path: "swiper",
+            name: "swiper",
+            meta: { title: "轮播图管理", icon: "swiper" },
+            component: () => import("@/views/system/pages/swiper/index.vue"),
+          },
+          {
+            path: "notice",
+            name: "notice",
+            meta: { title: "公告管理", icon: "notice" },
+            component: () => import("@/views/system/pages/notice/index.vue"),
+          },
+        ]
+      }
+    ]
+  },
+  {
+    path: "/login",
+    name: "login",
+    meta: {},
+    component: () => import("@/views/login/index.vue"),
+  },
+  { path: '/:pathMatch(.*)*', name: 'notFound', component: () => import("@/views/404.vue") },
+];
+
+const router = createRouter({
+  history:  createWebHistory(import.meta.env.VITE_BASE_PATH),
+  routes: [...commonRoutes],
+});
+
+export default router;
+
+```
+
+
+
+#### 3、Layout布局
+
+Layout布局我们暂时分成左右结构，左边就是导航栏，右边分成三部分(页头、主体、页脚)，因此就拆分出了四个组件。
+
++ aside.vue 导航栏
+
+  ```vue
+  <template>
+    <el-aside width="200px">
+      <div class="logo-container">
+        <img src="../../assets/images/logo.4eeb8a8e.png" />
+        <p>网捷回收</p>
+      </div>
+      <el-menu router unique-opened background-color="#304156" :default-active="currentPath" text-color="#bfcbd9"
+        @open="handleOpen" @close="handleClose">
+        <el-menu-item index="/home"> 
+          <el-icon> <Orange /> </el-icon>
+          <span>首页</span>
+        </el-menu-item>
+        
+        <el-sub-menu index="/system">
+          <template #title>
+            <el-icon><Monitor /></el-icon>
+            <span>系统管理</span>
+  	    </template>
+          <el-menu-item index="/system/swiper">
+            <template #title>
+              <el-icon><Picture /> </el-icon>
+              <span>轮播图管理</span>
+            </template>
+          </el-menu-item>
+  
+          <el-menu-item index="/system/notice">
+            <template #title>
+              <el-icon><Notification /> </el-icon>
+              <span>公告管理</span>
+            </template>
+          </el-menu-item>
+        </el-sub-menu>
+      </el-menu>
+    </el-aside>
+  </template>
+  
+  <script lang="ts" setup>
+  import { ref, watch } from 'vue';
+  
+  import {
+    Orange, DataBoard, Iphone, Picture, Notification, Monitor
+  } from '@element-plus/icons-vue'
+  
+  import { useRoute } from "vue-router"
+  
+  
+  const route = useRoute()
+  const currentPath = ref("");
+  
+  watch(() => route.fullPath, (newVal) => {
+    currentPath.value = newVal;
+  }, { immediate: true })
+  
+  const handleOpen = (key: string, keyPath: string[]) => {
+  }
+  
+  const handleClose = (key: string, keyPath: string[]) => {
+  }
+  
+  </script>
+  
+  <style lang="less" scoped>
+  .logo-container {
+    width: 200px;
+    height: 60px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  
+    img {
+      width: 40px;
+      height: 40px;
+      margin-right: 5px;
+    }
+  
+    p {
+      font-size: 16px;
+      font-weight: 600;
+      color: #ffffff;
+      margin-left: 5px;
+    }
+  }
+  
+  .el-aside,
+  .el-menu {
+    background-color: #304156;
+    border-right: none;
+  
+    .el-sub-menu,
+    .el-menu-item {
+      width: 200px;
+    }
+  
+    ::v-deep .is-active {
+      width: 200px;
+    }
+  
+    ::v-deep .is-opened .el-menu {
+      background-color: #1f2d3d;
+    }
+  }
+  </style>
+  ```
 
   
+
++ header.vue页头,实现面包屑和退出登录
+
+  ```vue
+  <template>
+    <el-header>
+      <div class="header-left">
+        <el-breadcrumb separator="/">
+          <el-breadcrumb-item :to="{ path: '/' }">首页</el-breadcrumb-item>
+           <!--  实现面包屑 -->
+          <el-breadcrumb-item v-for="item in breadCrumbList">{{ item.meta.title }}</el-breadcrumb-item>
+        </el-breadcrumb>
+      </div>
+      <div class="header-right">
+        <el-button @click="logout" plain>logout</el-button>
+      </div>
+    </el-header>
+  </template>
+  
+  <script lang="ts" setup>
+  import { ref, watch } from "vue"
+  import { useRoute, useRouter } from "vue-router"
+  
+  import { userStore } from "../../store/index"
+  
+  const route = useRoute()
+  const router = useRouter()
+  const breadCrumbList = ref<any[]>([]);
+  
+  const logout = () => {
+    userStore.cleanUserInfo();
+    userStore.cleanUserLoginInfo();
+    router.push({ path: "/login" });
+  }
+  
+  
+  watch(() => route.matched, (newVal) => {
+    breadCrumbList.value = newVal.filter(r => r.meta && r.meta.title);
+  }, { immediate: true })
+  
+  
+  </script>
+  
+  <style lang="less" scoped>
+  .el-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  </style>
+  ```
+
+  
+
++ footer.vue  页脚
+
+  ```vue
+  
+  <template>
+    <el-footer>
+      <p class="footer-text"></p>
+    </el-footer>
+  </template>
+  
+  <script lang="ts">
+  import { defineComponent } from 'vue';
+  
+  export default defineComponent({
+    name: "",
+  });
+  </script>
+  
+  <style lang="less" scoped>
+  .el-footer {
+    background-color: #ffffff;
+    color: #3a3737;
+    text-align: center;
+    line-height: 60px;
+  
+    .footer-text {
+      font-size: 14px;
+    }
+  }
+  </style>
+  ```
+
+  
+
+  
+
++ layout/index.vue 主体(作为路由出口)
+
+  ```vue
+  <template>
+    <div id="index">
+      <div class="common-layout">
+        <el-container>
+          <IndexAside />
+          <el-container direction="vertical">
+            <IndexHeader />
+            <el-main> 
+              <!-- 路由出口 -->
+              <router-view></router-view>
+            </el-main>
+            <IndexFooter />
+          </el-container>
+        </el-container>
+      </div>
+    </div>
+  </template>
+  
+  <script lang="ts" setup>
+    import IndexHeader from "@/components/layout/header.vue"
+    import IndexAside from "@/components/layout/aside.vue"
+    import IndexFooter from "@/components/layout/footer.vue"
+  </script>
+  
+  <style scoped lang="less">
+  #index {
+    width: 100%;
+    height: 100vh;
+    background-color: #f1f3f4;
+  
+    .common-layout,
+    .el-container {
+      height: 100%;
+  
+      .el-main {
+        width: 100%;
+        background-color: #ffffff;
+      }
+    }
+  }
+  </style>
+  ```
+
+  ​	
+
+### 第四章、登录鉴权
+
+#### 1、登录功能
+
+```typescript
+interface ILoginUserInfo {
+  username: String,
+  password: String,
+}
+
+export type {
+  ILoginUserInfo
+}
+```
+
+
+
+新建两个文件、分别负责请求用户和系统字典相关的请求处理
+
+```typescript
+import { ILoginUserInfo } from "../views/login/type";
+import request from "./request";
+
+// 用户授权
+export function userAuth(loginUserInfo: ILoginUserInfo) {
+  return request({
+    method: "POST",
+    url: `/auth`,
+    data: loginUserInfo
+  })
+}
+
+// 获取用户信息
+export function userInfo(userId: string) {
+  return request({
+    method: "GET",
+    url: `users/${userId}`,
+  })
+}
+```
+
+```typescript
+import request from "./request";
+
+// 数据字典
+export function systemDict() {
+  return request({
+    method: "GET",
+    url: `/systemDict`,
+  })
+}
+
+```
+
+
+
+```vue
+<template>
+  <div id="login-page">
+    <div class="login-form">
+      <p class="title">Hi，欢迎登录</p>
+      <el-form ref="ruleFormRef" :model="ruleForm" status-icon :rules="rules" label-width="0" class="demo-ruleForm">
+        <el-form-item label="" prop="username">
+          <el-input :prefix-icon="Avatar" v-model="ruleForm.username" type="text" autocomplete="off"></el-input>
+        </el-form-item>
+        <el-form-item label="" prop="password">
+          <el-input :prefix-icon="Lock" v-model="ruleForm.password" show-password type="password"
+            autocomplete="off"></el-input>
+        </el-form-item>
+        <el-form-item>
+          <el-button class="login-btn" type="primary" @click="loginHandler(ruleFormRef)">登录</el-button>
+        </el-form-item>
+      </el-form>
+      <div class="form-bottom">
+        <el-button class="register-btn" link type="primary">找回密码</el-button>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script lang="ts" setup>
+
+import { reactive, ref } from "vue";
+import { useRouter } from "vue-router";
+import { Avatar, Lock } from "@element-plus/icons-vue";
+import { ElButton, ElForm, ElFormItem, ElInput, ElMessage, FormInstance } from 'element-plus';
+
+import { userAuth, userInfo } from "../../api/user";
+
+import { userStore } from "../../store/index"
+
+import type { ILoginUserInfo } from "./type";
+import type { IUserInfo, IUserLoginInfo } from "../../store/modules/user";
+import { systemDict } from "../../api/system-dict";
+import { SCache } from "../../utils/cache";
+import { canAccess } from "../../permission";
+
+
+const router = useRouter()
+const ruleFormRef = ref<FormInstance>()
+const ruleForm = reactive<ILoginUserInfo>({
+  username: "admin",
+  password: "123456",
+})
+
+const rules = reactive({
+  username: [{ required: true, min: 4, max: 24, trigger: 'blur' }],
+  password: [{ required: true, min: 6, max: 32, trigger: 'blur' }],
+})
+
+const loginHandler = (formEl: FormInstance | undefined) => {
+  if (!formEl) return
+  formEl.validate(async (valid) => {
+    if (valid) {
+      // 授权登录
+      const authResult = await userAuth(ruleForm);
+      userStore.saveUserLoginInfo(authResult.data as IUserLoginInfo);
+
+      // 请求用户信息
+      const userInfoResult = await userInfo(authResult.data.id);
+      userStore.saveUserInfo(userInfoResult.data as IUserInfo);
+
+      // 权限判断
+      if(canAccess(userInfoResult.data.userType)){
+         // 请求数据字典
+        const systemDictResult = await systemDict();
+        SCache.set("systemDict", systemDictResult.data)
+        // 跳转到首页
+        router.push({path:"/"});
+      }else{
+        ElMessage({ message: "非管理员用户暂时不能登录后台管理系统", type: 'error' });
+        userStore.cleanUserInfo();
+        userStore.cleanUserLoginInfo();
+      }
+    }
+  });
+}
+
+</script>
+
+<style lang="less" scoped>
+#login-page {
+  width: 100%;
+  height: 100vh;
+  background: url("../../assets/images/login_background.e80f4621.png");
+  background-size: cover;
+
+  /* element-ui 样式重置 */
+  .login-form {
+    box-sizing: border-box;
+    width: 320px;
+    height: 340px;
+    position: absolute;
+    background-color: #ffffff;
+    border-radius: 8px;
+    right: 105px;
+    bottom: 150px;
+    text-align: center;
+    padding: 20px 10px;
+
+    .title {
+      font-size: 18px;
+      margin-top: 20px;
+      margin-bottom: 30px;
+    }
+
+    .login-btn {
+      width: 100px;
+    }
+
+    .form-bottom {
+      margin-top: 30px;
+      text-align: right;
+      padding: 0 10px;
+    }
+  }
+}
+</style>
+```
+
+
+
+pinia中user.ts相关代码
+
+```typescript
+import { defineStore } from "pinia";
+import { SCache } from "../../utils/cache";
+
+export interface IUserInfo {
+  id: string,
+  username: string,
+  userType: string,
+  gender: string,
+  attachmentId: string,
+  nickName: string,
+  phone: string,
+  isDelete: string,
+  lastVisitTime: string,
+  createTime: string,
+  updateTime: string,
+}
+
+export interface IUserLoginInfo {
+  id: string,
+  username: string,
+  token: string,
+}
+
+export interface IUserStore {
+  userInfo: IUserInfo
+  userLoginInfo: IUserLoginInfo
+}
+
+
+
+const rootStore = defineStore("userStore", {
+  state(): IUserStore {
+    return {
+      userLoginInfo: {
+        id: SCache.get("id"),
+        username: SCache.get("username"),
+        token: SCache.get("token"),
+      },
+      userInfo: SCache.get("userInfo"),
+    }
+  },
+
+  getters: {},
+
+  actions: {
+    saveUserLoginInfo(userLoginInfo: IUserLoginInfo) {
+      this.userLoginInfo = userLoginInfo;
+      SCache.set("id", userLoginInfo.id);
+      SCache.set("username", userLoginInfo.username);
+      SCache.set("token", userLoginInfo.token);
+    },
+
+    cleanUserLoginInfo() {
+      this.$patch({ userLoginInfo: {} })
+      SCache.clear()
+    },
+
+    saveUserInfo(userInfo: IUserInfo) {
+      this.userInfo = userInfo;
+      SCache.set("userInfo", userInfo);
+    },
+
+    cleanUserInfo() {
+      this.$patch({ userInfo: {} })
+      SCache.clear()
+    }
+  }
+});
+
+
+export default rootStore;
+```
+
+
+
+#### 2、鉴权逻辑
+
+```typescript
+import { ElMessage } from "element-plus";
+import router from "./router";
+import { IUserInfo } from "./store/modules/user";
+import { SCache } from "./utils/cache";
+
+// 路由拦截
+const whileList: Array<string> = ["notFound", "login"];
+router.beforeEach((to, from, next) => {
+  if (SCache.get("token") && SCache.get("userInfo")) {
+    if (to.path === "/login") {
+      // 已经登录情况下 不能直接访问登录界面
+      next(from.path);
+      return;
+    }
+    // has token
+    // 判断是否有权限(根据角色CODE)进入
+    if (canAccess((SCache.get("userInfo") as IUserInfo).userType)) {
+      next();
+    } else {
+      ElMessage({ message: "非管理员用户暂时不能登录后台管理系统", type: 'error' });
+      next("/login");
+    }
+  } else {
+    // no token
+    if (whileList.includes(to.name as string)) {
+      // 白名单放行
+      next();
+    } else {
+      // to login page
+      next("/login");
+    }
+  }
+})
+
+export function canAccess(code: string): boolean {
+  return code === "0";
+}
+```
+
+需要在main.ts中引入
+
+```typescript
+import "./permission";
+```
 
