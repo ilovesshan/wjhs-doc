@@ -4,6 +4,7 @@ module.exports = {
   base: "/wjhs-doc/",
   theme: 'reco',
   markdown: {
+    lineNumbers:true,
     extractHeaders: ['h4', 'h3']
   },
   head: [
