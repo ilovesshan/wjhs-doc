@@ -1475,6 +1475,112 @@ public class R implements Serializable {
 
 
 
+#### 9、全局异常处理
+
+```java
+public class CustomException extends RuntimeException {
+    public CustomException(String message) {
+        super(message);
+    }
+}
+
+public class AuthorizationException extends RuntimeException {
+    public AuthorizationException(String message) {
+        super(message);
+    }
+}
+```
+
+```java
+package com.ilovesshan.wjhs.core.handler;
+
+import com.ilovesshan.wjhs.core.exception.AuthorizationException;
+import com.ilovesshan.wjhs.core.exception.CustomException;
+import com.ilovesshan.wjhs.utils.R;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.annotation.ControllerAdvice;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.ResponseStatus;
+
+@ControllerAdvice
+public class GlobalExceptionHandler {
+
+    /**
+     * 自定义异常
+     */
+    @ExceptionHandler(CustomException.class)
+    @ResponseStatus(HttpStatus.OK)
+    @ResponseBody
+    public R handleException(CustomException exception) {
+        exception.printStackTrace();
+        return R.fail(exception.getMessage(), null);
+    }
+
+
+    /**
+     * 参数不匹配异常
+     */
+    @ExceptionHandler(value = {MethodArgumentNotValidException.class})
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    @ResponseBody
+    public R handleMethodArgumentNotValidExceptionHandler(MethodArgumentNotValidException exception) {
+        exception.printStackTrace();
+        return R.fail(exception.getAllErrors().get(0).getDefaultMessage());
+    }
+
+    /**
+     * 暂无权限访问/操作该资源
+     */
+    @ExceptionHandler(value = {AccessDeniedException.class})
+    @ResponseStatus(HttpStatus.FORBIDDEN)
+    @ResponseBody
+    public R handleMethodArgumentNotValidExceptionHandler(AccessDeniedException exception) {
+        exception.printStackTrace();
+        return R.builder().code(R.ERROR_CODE_FORBIDDEN).message(R.ERROR_MESSAGE_FORBIDDEN).build();
+    }
+
+
+    /**
+     * 权限异常
+     */
+    @ExceptionHandler(value = {AuthorizationException.class})
+    @ResponseStatus(HttpStatus.UNAUTHORIZED)
+    @ResponseBody
+    public R handleMethodArgumentNotValidExceptionHandler(AuthorizationException exception) {
+        exception.printStackTrace();
+        return R.builder().code(R.ERROR_CODE_AUTHORIZATION).message(exception.getMessage()).build();
+    }
+
+
+    /**
+     * BadCredentialsException 鉴权(密码错误)异常
+     */
+    @ExceptionHandler(BadCredentialsException.class)
+    @ResponseBody
+    public R handleBadCredentialsException(BadCredentialsException exception) {
+        exception.printStackTrace();
+        return R.fail(exception.getMessage(), null);
+    }
+
+    /**
+     * 其他异常
+     */
+    @ExceptionHandler(Exception.class)
+    @ResponseBody
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    public R handleException(Exception exception) {
+        exception.printStackTrace();
+        return R.error(exception.getMessage(), null);
+    }
+}
+```
+
+
+
 ### 第四章、用户授权接口
 
 在之后的代码中：主要贴出controller和service代码、dao层基本就是编写sql语句，代码比较繁琐，详细代码请参考github。
@@ -1933,6 +2039,19 @@ public class WxAuthServiceImpl implements WxAuthService {
           return super.authenticationManagerBean();
       }
   }
+  ```
+
++ 认证异常处理器
+
+  ```java
+  @Component
+  public class AuthenticationEntryPointHandler implements AuthenticationEntryPoint {
+      @Override
+      public void commence(HttpServletRequest request, HttpServletResponse response, AuthenticationException authException) throws IOException, ServletException {
+          ResponseUtil.write(response, R.builder().code(401).message(R.ERROR_INSUFFICIENT_AUTHENTICATION).build());
+      }
+  }
+  
   ```
 
   
