@@ -45,6 +45,15 @@ module.exports = {
         link: '/pages/iteration.md',
       },
       {
+        text: '知识补充',
+        items: [
+          {
+            text: 'linux常用命令',
+            link: '/pages/linux-command.md',
+          },
+        ]
+      },
+      {
         text: '项目资源地址',
         items: [
           {
