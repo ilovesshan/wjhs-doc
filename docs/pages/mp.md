@@ -141,7 +141,8 @@ export default new Cache()
 ```typescript
 import Cache from "../utils/cache"
 
-const BASE_URL: string = "http://114.55.32.234:8127";
+// const BASE_URL: string = "http://114.55.32.234:8127";
+const BASE_URL: string = "http://127.0.0.1";
 
 type ALLOW_METHODS = "OPTIONS" | "GET" | "HEAD" | "POST" | "PUT" | "DELETE" | "TRACE" | "CONNECT";
 type ALLOW_DATA = string | Map<String, any> | ArrayBuffer | any;
@@ -174,7 +175,7 @@ const baseRequest = (uri: string, method: ALLOW_METHODS, data?: ALLOW_DATA, load
       method,
       data,
       header: {
-        "Authorization": Cache.get("token") ? "Bearer " + Cache.get("token") : "",
+        "Authorization": "Openid " + Cache.get("openId"),
       },
       success: res => {
         if (res.statusCode == 200) {
@@ -188,6 +189,9 @@ const baseRequest = (uri: string, method: ALLOW_METHODS, data?: ALLOW_DATA, load
             } else {
               wx.showToast({ title: "授权信息过期，请重新登录授权", icon: "none" })
             }
+            wx.navigateTo({
+              url: "/pages/auth/auth"
+            })
           } else {
             wx.showToast({ title: "服务器繁忙" + ((res.data as any).error || (res.data as any)), icon: "none" })
           }
