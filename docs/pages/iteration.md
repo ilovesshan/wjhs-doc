@@ -50,9 +50,8 @@
 
 迭代目标
 
-- SpringBoot用户登录接口
-- SpringBoot小程序登录接口
-- SpringBoot集成SpringSecurity和Redis
+- SpringBoot小程序和用户登录接口
+- SpringBoot集成Redis
 - 全局异常处理和统一返回响应格式
 - AppTabar搭建和实现登录功能
 - 小程序Tabbar搭建和实现授权功能
@@ -66,9 +65,8 @@
 已完成
 
 ```
-- SpringBoot用户登录接口
-- SpringBoot小程序登录接口
-- SpringBoot集成SpringSecurity和Redis
+- SpringBoot小程序和用户登录接口
+- SpringBoot集成Redis
 - 全局异常处理和统一返回响应格式
 - AppTabar搭建和实现登录功能
 - 小程序Tabbar搭建和实现授权功能
