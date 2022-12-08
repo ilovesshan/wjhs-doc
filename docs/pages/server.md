@@ -2215,8 +2215,9 @@ where
                   throw new AuthorizationException(R.ERROR_INSUFFICIENT_AUTHENTICATION);
               }
               // 将当前用户ID和用户名称存在UserCache中 方便在任意地方获取
-              UserCache.set("wxUserId", finedUser.getId());
-              UserCache.set("wxUsername", finedUser.getNickName());
+              UserCache.set("userId", finedUser.getId());
+              UserCache.set("username", finedUser.getNickName());
+              UserCache.set("userType", "1");
               return true;
           } else {
               String userId = JwtUtil.getUserId(authorization.replace(Constants.HEADER_VALUE_PREFIX, ""));
@@ -2228,10 +2229,12 @@ where
               // 将当前用户ID和用户名称存在UserCache中 方便在任意地方获取
               UserCache.set("userId", userId);
               UserCache.set("username", finedUser.getUsername());
+              UserCache.set("userType", finedUser.getUserType());
               return true;
           }
       }
   }
+  
   ```
 
 + 添加自定类 `WebMvcConfig` 实现 `WebMvcConfigurer` 接口，重写 `addResourceHandlers` 和 `addInterceptors` 方法。
@@ -2257,12 +2260,6 @@ where
       }
   
       @Override
-      public void addResourceHandlers(ResourceHandlerRegistry registry) {
-          // 配置虚拟路径
-          registry.addResourceHandler("/preview/**").addResourceLocations("file:D:/www/wjhs/upload/");
-      }
-  
-      @Override
       public void addInterceptors(InterceptorRegistry registry) {
           registry.addInterceptor(securityHandlerInterceptor())
                   .addPathPatterns("/**")
@@ -2271,5 +2268,987 @@ where
       }
   }
   ```
+  
+
+
+
+### 第五章、操作日志模块
+
+#### 1、添加spring支持切面编程依赖
+
+```xml
+<!-- 支持 切面编程 -->
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-aop</artifactId>
+</dependency>
+```
+
+
+
+#### 2、数据库脚本更新
+
++ 更新日志表中url数据长度
+
+  `V20221204.01__update_operation_log_table_structure.sql`
+
+  ```sql
+  -- 更新日志表中url数据长度
+  alter table operation_log modify `url` VARCHAR(255) NOT NULL COMMENT '请求url';
+  ```
 
   
+
+#### 3、异步日志实现
+
++ 自定义注解
+
+  ```java
+  @Retention(RetentionPolicy.RUNTIME)
+  @Target(ElementType.METHOD)
+  public @interface Log {
+      // 业务模块
+      String businessModule();
+  
+      // 业务类型
+      String businessType();
+  
+      // 描述信息
+      String businessDescribe() default "";
+  }
+  
+  ```
+
+  
+
++ 定义切面
+
+  ```java
+  @Aspect
+  @Component
+  public class LogAspect {
+  
+      @Autowired
+      private OperationLogService operationLogService;
+  
+      // 最终通知
+      @AfterReturning(pointcut = "@annotation(log)")
+      public void afterReturningAdvice(JoinPoint joinPoint, Log log) {
+          OperationLog operationLog = generatorLogOperation(joinPoint, log, null);
+          operationLogService.insert(operationLog);
+      }
+  
+  
+      // 异常通知
+      @AfterThrowing(pointcut = "@annotation(log)", throwing = "exception")
+      public void afterThrowingAdvice(JoinPoint joinPoint, Log log, Exception exception) {
+          OperationLog operationLog = generatorLogOperation(joinPoint, log, exception);
+          operationLogService.insert(operationLog);
+      }
+  
+  
+      public OperationLog generatorLogOperation(JoinPoint joinPoint, Log log, Exception exception) {
+          HttpServletRequest request = ((ServletRequestAttributes) Objects.requireNonNull(RequestContextHolder.getRequestAttributes())).getRequest();
+          OperationLog operationLog = new OperationLog();
+          operationLog.setId(UuidUtil.generator());
+          operationLog.setBusinessModule(log.businessModule());
+          operationLog.setBusinessType(log.businessType());
+          operationLog.setBusinessDescribe(log.businessDescribe());
+          operationLog.setApiMethod(joinPoint.getSignature().getName());
+          operationLog.setRequestMethod(request.getMethod());
+          operationLog.setUserId(UserCache.get("userId"));
+          operationLog.setUserName(UserCache.get("username"));
+          operationLog.setUserType(UserCache.get("userType"));
+          operationLog.setUrl(request.getRequestURI());
+          operationLog.setIp(request.getRemoteAddr());
+          if (exception == null) {
+              operationLog.setStatus("200");
+              operationLog.setErrorMessage("");
+          } else {
+              operationLog.setStatus("500");
+              operationLog.setErrorMessage(exception.getMessage());
+          }
+          operationLog.setOperationTime(new Date());
+  
+          return operationLog;
+      }
+  
+  }
+  ```
+
+  
+
++ 定义service层
+
+  ```java
+  public interface OperationLogService {
+      void insert(OperationLog operationLog);
+  }
+  ```
+
+  ```java
+  @Service
+  public class OperationLogServiceImpl implements OperationLogService {
+  
+      @Autowired
+      private OperationLogMapper operationLogMapper;
+  
+  	// 这里使用 @Async注解、可以实现异步功能提高UI响应速度
+      //  @Async注解需要 使用@EnableAsync注解后，才生效
+      @Async
+      @Override
+      public void insert(OperationLog operationLog) {
+          operationLogMapper.insert(operationLog);
+      }
+  }
+  ```
+
+  
+
++ mapper层
+
+  ```java
+  @Mapper
+  public interface OperationLogMapper {
+      int insert(OperationLog operationLog);
+  }
+  ```
+
+  ```xml
+  <?xml version="1.0" encoding="UTF-8" ?>
+  <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+  <mapper namespace="com.ilovesshan.wjhs.mapper.OperationLogMapper">
+  
+      <sql id="allColumns">
+          `id`, `business_module`, `business_type`, `business_describe`, `api_method`, `request_method`, `user_id`, `user_name`, `user_type`, `url`, `ip`, `status`, `is_delete`, `error_message`, `operation_time`
+      </sql>
+  
+      <insert id="insert">
+          insert into
+              `wjhs`.`operation_log` (`id`, `business_module`, `business_type`, `business_describe`, `api_method`, `request_method`, `user_id`, `user_name`, `user_type`, `url`, `ip`, `status`, `error_message`, `operation_time`)
+          values
+              (#{id}, #{businessModule}, #{businessType}, #{businessDescribe}, #{apiMethod}, #{requestMethod}, #{userId}, #{userName}, #{userType}, #{url}, #{ip}, #{status}, #{errorMessage}, #{operationTime});
+      </insert>
+  
+  </mapper>
+  ```
+
+  
+
++ 添加开启异步任务的注解 `@EnableAsync`
+
+  ```java
+  @SpringBootApplication
+  @EnableAsync
+  public class WjhsApplication {
+  
+      public static void main(String[] args) {
+          SpringApplication.run(WjhsApplication.class, args);
+      }
+  }
+  ```
+
++ `@Log`使用方法
+
+  ```java
+  @Log(businessModule = "附件模块", businessType = "POST", businessDescribe = "上传附件")   
+  @ApiOperation("上传附件")
+  @PostMapping
+  public void upload() {
+      // ...
+  }
+  
+  @Log(businessModule = "附件模块", businessType = "DELETE", businessDescribe = "根据ID删除附件")
+  @ApiOperation("根据ID删除附件")
+  @DeleteMapping("/{id}")
+  public void deleteById(@PathVariable String id) {
+          // ...
+  }
+  ```
+
+  
+
+### 第五章、文件管理模块
+
+
+
+#### 1、添加常量配置
+
+```java
+public class Constants {
+    // ...
+
+    // 附件上传地址(windows)
+    public static final String ATTACHMENT_UPLOAD_WINDOWS_DEST = "D:/www/wjhs/upload/";
+
+    // 附件上传地址(linux)
+    public static final String ATTACHMENT_UPLOAD_LINUX_DEST = "/home/www/wjhs/upload/";
+
+    // 附件预览前缀
+    public static final String FILE_PREVIEW_PREFIX = "/preview/";
+
+}
+```
+
+```java
+// 在R.java 中添加通用的常量信息
+
+public static final String ERROR_RESOURCES_NOTFOUND = "资源不存在";
+public static final String SUCCESS_ATTACHMENT_UPLOAD = "附件上传成功";
+public static final String ERROR_ATTACHMENT_UPLOAD = "附件上传失败";
+public static final String ERROR_ATTACHMENT_NOTFOUND = "附件不存在";
+```
+
+
+
+#### 2、获取当前操作系统工具类
+
+```java
+public class SystemUtil {
+    /**
+     * 当前系统环境是否是 windows
+     *
+     * @return boolean
+     */
+    public static boolean isWindows() {
+        return System.getProperty("os.name").toLowerCase().startsWith("win");
+    }
+}
+
+```
+
+
+
+#### 3、配置文件上传参数
+
++ yaml中配置文件上传参数
+
+  ```yaml
+  spring
+   # 文件上传配置
+    servlet:
+      multipart:
+        # 单个文件大小限制
+        max-file-size: 5MB
+        # 一次请求中所有上传文件总大小限制
+        max-request-size: 20MB
+  ```
+
+  
+
++ 配置文件预览虚拟路径
+
+  ```java
+  @Configuration
+  public class WebMvcConfig implements WebMvcConfigurer {
+  
+      // 注入拦截器
+      // ...
+  
+  
+      @Override
+      public void addResourceHandlers(ResourceHandlerRegistry registry) {
+          // 区分当前运行的系统环境
+          registry.addResourceHandler("/preview/**").addResourceLocations("file:" + (SystemUtil.isWindows() ? Constants.ATTACHMENT_UPLOAD_WINDOWS_DEST : Constants.ATTACHMENT_UPLOAD_LINUX_DEST));
+      }
+  
+  
+      @Override
+      public void addInterceptors(InterceptorRegistry registry) {
+          // ...
+      }
+  }
+  ```
+
+  
+
+#### 4、文件上传实现
+
++ `PO、VO、DTO` 定义，请参考项目源码
+
+  
+
++ controller层
+
+  ```java
+  @Api(tags = "附件模块")
+  @RestController
+  @RequestMapping("attachments")
+  public class AttachmentController {
+  
+      @Autowired
+      private AttachmentService attachmentService;
+  
+      @Autowired
+      private AttachmentConverter attachmentConverter;
+  
+      @ApiOperation("上传附件")
+      @PostMapping
+      @Log(businessModule = "附件模块", businessType = "POST", businessDescribe = "上传附件")
+      public R upload(@RequestParam("file") MultipartFile file) {
+          String attachmentId = attachmentService.upload(file);
+          Attachment attachment = attachmentService.selectById(attachmentId);
+          return R.success(R.SUCCESS_ATTACHMENT_UPLOAD, attachmentConverter.po2vo(attachment));
+      }
+  
+  
+      @ApiOperation("根据ID查询附件")
+      @GetMapping("/{id}")
+      public R select(@PathVariable String id) {
+          Attachment attachment = attachmentService.selectById(id);
+          return R.success(R.SUCCESS_MESSAGE_SELECT, attachmentConverter.po2vo(attachment));
+      }
+  
+  
+      @Log(businessModule = "附件模块", businessType = "DELETE", businessDescribe = "根据ID删除附件")
+      @ApiOperation("根据ID删除附件")
+      @DeleteMapping("/{id}")
+      public R deleteById(@PathVariable String id) {
+          attachmentService.deleteById(id);
+          return R.success(R.SUCCESS_MESSAGE_DELETE);
+      }
+  }
+  ```
+
+  
+
++ service层
+
+  ```java
+  public interface AttachmentService {
+      String upload(MultipartFile multipartFile);
+  
+      boolean saveAttachment(Attachment attachment);
+  
+      Attachment selectById(String id);
+  
+      boolean deleteById(String id);
+  }
+  ```
+
+  ```java
+  @Service
+  @Slf4j
+  public class AttachmentServiceImpl implements AttachmentService {
+  
+      @Autowired
+      private AttachmentMapper attachmentMapper;
+  
+      @Override
+      public String upload(MultipartFile multipartFile) {
+          // 区分当前运行的系统环境
+          File fileDir = new File(SystemUtil.isWindows() ? Constants.ATTACHMENT_UPLOAD_WINDOWS_DEST : Constants.ATTACHMENT_UPLOAD_LINUX_DEST);
+  
+          if (!fileDir.exists()) {
+              fileDir.mkdirs();
+          }
+          // 获取文件扩展名
+          String ext = multipartFile.getOriginalFilename().substring(multipartFile.getOriginalFilename().lastIndexOf("."));
+  
+          // 文件名称
+          String fileName = UuidUtil.generator() + ext;
+  
+          try {
+              multipartFile.transferTo(new File(fileDir + File.separator + fileName));
+          } catch (IOException e) {
+              e.printStackTrace();
+              throw new CustomException(R.ERROR_ATTACHMENT_UPLOAD);
+          }
+  
+          // 组装一个Attachment对象 新增到数据库
+          Attachment attachment = new Attachment();
+          attachment.setId(UuidUtil.generator());
+          attachment.setUrl(Constants.FILE_PREVIEW_PREFIX + fileName);
+          attachment.setCreateByUserId(UserCache.get("userId"));
+          attachment.setCreateByUserName(UserCache.get("username"));
+          attachment.setCreateByUserType(UserCache.get("userType"));
+          saveAttachment(attachment);
+          return attachment.getId();
+      }
+  
+  
+      @Override
+      public boolean saveAttachment(Attachment attachment) {
+          return attachmentMapper.insert(attachment) > 0;
+      }
+  
+      @Override
+      public Attachment selectById(String id) {
+          return attachmentMapper.selectById(id);
+      }
+  
+      @Override
+      public boolean deleteById(String id) {
+          Attachment finedAttachment = selectById(id);
+          if (Objects.isNull(finedAttachment)) {
+              throw new CustomException(R.ERROR_ATTACHMENT_NOTFOUND);
+          }
+  
+          String filePath = (SystemUtil.isWindows() ? Constants.ATTACHMENT_UPLOAD_WINDOWS_DEST : Constants.ATTACHMENT_UPLOAD_LINUX_DEST) + finedAttachment.getUrl();
+          // 删除本地文件  替换掉 "//preview" 预览前缀
+          boolean deleteSuccess = new File(filePath.replace("//preview", "")).delete();
+          if (deleteSuccess) {
+              // 删除数据库文件
+              return attachmentMapper.deleteById(id) > 0;
+          } else {
+              throw new CustomException(R.ERROR_MESSAGE_DELETE);
+          }
+      }
+  }
+  
+  ```
+
+  
+
++ mapper层
+
+  ```java
+  @Mapper
+  public interface AttachmentMapper {
+  
+      int insert(Attachment attachment);
+  
+      Attachment selectById(String id);
+  
+      int deleteById(String id);
+  }
+  
+  ```
+
+  ```xml
+  <?xml version="1.0" encoding="UTF-8" ?>
+  <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+  <mapper namespace="com.ilovesshan.wjhs.mapper.AttachmentMapper">
+  
+      <sql id="allColumns">
+          `id`, `url`, `create_by_user_id`, `create_by_user_name`, `create_by_user_type`, `is_delete`, `create_time`, `update_time`
+      </sql>
+  
+  
+      <insert id="insert">
+          insert into
+              `wjhs`.`attachment` (`id`, `url`, `create_by_user_id`, `create_by_user_name`, `create_by_user_type`)
+          values
+              (#{id}, #{url}, #{createByUserId}, #{createByUserName}, #{createByUserType});
+      </insert>
+  
+  
+      <delete id="deleteById">
+          update  `wjhs`.`attachment` set is_delete = '14' where id = #{id};
+      </delete>
+  
+  
+      <select id="selectById" resultType="com.ilovesshan.wjhs.beans.pojo.Attachment">
+          select <include refid="allColumns" /> from `wjhs`.`attachment` where id = #{id} and is_delete = '15';
+      </select>
+  
+  </mapper>
+  ```
+
+  
+
+### 第六章、轮播图、公告管理模块
+
+#### 1、数据库脚本更新
+
+`V20221204.02__insert_system_dict_table.sql`
+
+```sql
+-- 添加数据字典
+INSERT INTO
+  `wjhs`.`system_dict` (`id`, `dict_code`, `dict_name`, `dict_describe`, `sort`, `create_by`, `create_by_user_id`, `update_by`, `update_by_user_id`)
+VALUES
+  ('7B780A0BF5EB46248FB77D800AD7024D', 31, '终端类型(zdlx)', '小程序', 1 , 'admin', '369BCFE480454D22A07A8644F6DF0349', NULL, NULL),
+  ('B81A602284B44052AE1BE0D5EBBA9A2E', 32, '终端类型(zdlx)', 'App', 1 , 'admin', '369BCFE480454D22A07A8644F6DF0349', NULL, NULL);
+```
+
+
+
+`V20221204.03__update_swiper_and_notice_structure_table.sql`
+
+```sql
+-- 更新轮播图表中 type字段备注说明
+alter table swiper modify `type` char(3)  NOT NULL COMMENT '类型(31:小程序端、32:App端)';
+
+-- 更新公告栏表中 type字段备注说明
+alter table notice modify `type` char(3)  NOT NULL COMMENT '类型(31:小程序端、32:App端)';
+```
+
+
+
+#### 2、轮播图管理模块实现
+
++ `PO、VO、DTO` 定义，请参考项目源码
+
++ controller层
+
+  ```java
+  @Api(tags = "轮播图模块")
+  @RestController
+  @RequestMapping("/swiper")
+  public class SwiperController {
+  
+      @Autowired
+      private SwiperService swiperService;
+  
+      @Autowired
+      private SwiperConverter swiperConverter;
+  
+      @Autowired
+      private AttachmentConverter attachmentConverter;
+  
+  
+      @ApiOperation("根据ID获取轮播图")
+      @GetMapping("/{id}")
+      public R selectById(@PathVariable String id) {
+          Swiper swiper = swiperService.selectById(id);
+          SwiperVo swiperVo = swiperConverter.po2vo(swiper);
+          swiperVo.setAttachment(attachmentConverter.po2vo(swiper.getAttachment()));
+          return R.success(R.SUCCESS_MESSAGE_SELECT, swiperVo);
+      }
+  
+  
+      @ApiOperation("获取轮播图")
+      @GetMapping
+      public R selectByConditions(@Validated SwiperSelectDto swiperSelectDto) {
+          List<Swiper> swipers = swiperService.selectByConditions(swiperSelectDto);
+          List<SwiperVo> swiperVos = swipers.stream().map(swiper -> {
+              SwiperVo swiperVo = swiperConverter.po2vo(swiper);
+              swiperVo.setAttachment(attachmentConverter.po2vo(swiper.getAttachment()));
+              return swiperVo;
+          }).collect(Collectors.toList());
+          return R.success(R.SUCCESS_MESSAGE_SELECT, swiperVos);
+      }
+  
+  
+      @ApiOperation("创建轮播图")
+      @PostMapping
+      public R create(@Validated @RequestBody SwiperCreateDto swiperCreateDto) {
+          boolean isSuccess = swiperService.create(swiperCreateDto);
+          return isSuccess ? R.success(R.SUCCESS_MESSAGE_INSERT) : R.fail(R.ERROR_MESSAGE_INSERT);
+      }
+  
+  
+      @ApiOperation("更新轮播图")
+      @PutMapping
+      public R update(@Validated @RequestBody SwiperUpdateDto swiperUpdateDto) {
+          boolean isSuccess = swiperService.update(swiperUpdateDto);
+          return isSuccess ? R.success(R.SUCCESS_MESSAGE_UPDATE) : R.fail(R.ERROR_MESSAGE_UPDATE);
+      }
+  
+      @ApiOperation("删除轮播图")
+      @DeleteMapping("/{id}")
+      public R deleteById(@PathVariable String id) {
+          boolean isSuccess = swiperService.deleteById(id);
+          return isSuccess ? R.success(R.SUCCESS_MESSAGE_DELETE) : R.fail(R.ERROR_MESSAGE_DELETE);
+      }
+  }
+  
+  ```
+
+  
+
++ service层
+
+  ```java
+  public interface SwiperService {
+      boolean create(SwiperCreateDto swiperCreateDto);
+  
+      List<Swiper> selectByConditions(SwiperSelectDto swiperSelectDto);
+  
+      boolean update(SwiperUpdateDto swiperUpdateDto);
+  
+      boolean deleteById(String id);
+  
+      Swiper selectById(String id);
+  }
+  
+  ```
+
+  ```java
+  
+  @Service
+  public class SwiperServiceImpl implements SwiperService {
+  
+      @Autowired
+      private SwiperMapper swiperMapper;
+  
+      @Autowired
+      private SwiperConverter swiperConverter;
+  
+      @Override
+      public boolean create(SwiperCreateDto swiperCreateDto) {
+          Swiper swiper = swiperConverter.dto2po(swiperCreateDto);
+          swiper.setId(UuidUtil.generator());
+          return swiperMapper.insert(swiper) > 0;
+      }
+  
+      @Override
+      public List<Swiper> selectByConditions(SwiperSelectDto swiperSelectDto) {
+          return swiperMapper.selectByConditions(swiperSelectDto);
+      }
+  
+      @Override
+      public boolean update(SwiperUpdateDto swiperUpdateDto) {
+          Swiper finedSwiper = swiperMapper.selectById(swiperUpdateDto.getId());
+          if (Objects.isNull(finedSwiper)) {
+              throw new CustomException(R.ERROR_RESOURCES_NOTFOUND);
+          }
+          return swiperMapper.update(swiperConverter.dto2po(swiperUpdateDto)) > 0;
+      }
+  
+      @Override
+      public boolean deleteById(String id) {
+          Swiper finedSwiper = swiperMapper.selectById(id);
+          if (Objects.isNull(finedSwiper)) {
+              throw new CustomException(R.ERROR_RESOURCES_NOTFOUND);
+          }
+          return swiperMapper.delete(id) > 0;
+      }
+  
+      @Override
+      public Swiper selectById(String id) {
+          return swiperMapper.selectById(id);
+      }
+  }
+  
+  ```
+
+  
+
++ mapper层
+
+  ```java
+  @Mapper
+  public interface SwiperMapper {
+  
+      Swiper selectById(String id);
+  
+      int insert(Swiper dto2po);
+  
+      List<Swiper> selectByConditions(SwiperSelectDto swiperSelectDto);
+  
+      int update(Swiper dto2po);
+  
+      int delete(String id);
+  }
+  
+  ```
+
+  
+
+  ```xml
+  <?xml version="1.0" encoding="UTF-8" ?>
+  <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+  <mapper namespace="com.ilovesshan.wjhs.mapper.SwiperMapper">
+  
+      <sql id="allColumns">
+          `id`, `type`, `attachment_id`, `title`, `sub_title`, `detail`, `link`, `is_delete`, `create_time`, `update_time`
+      </sql>
+  
+  
+      <insert id="insert">
+          insert into
+              `wjhs`.`swiper` (`id`, `type`, `attachment_id`, `title`, `sub_title`, `detail`, `link`)
+          values
+              (#{id}, #{type}, #{attachmentId}, #{title}, #{subTitle}, #{detail}, #{link});
+      </insert>
+  
+  
+  
+      <resultMap id="swiperMap" type="com.ilovesshan.wjhs.beans.pojo.Swiper" autoMapping="true">
+          <association property="attachment" javaType="com.ilovesshan.wjhs.beans.pojo.Attachment" autoMapping="true">
+              <id column="a_id" property="id"/>
+          </association>
+      </resultMap>
+  
+      <select id="selectByConditions" resultMap="swiperMap">
+          select
+              s.id, s.type, s.attachment_id, s.title, s.detail, s.link, s.sub_title, s.is_delete, s.create_time, s.update_time,
+              a.id a_id , a.url, a.create_by_user_id, a.create_by_user_name, a.create_by_user_type, a.is_delete, a.create_time, a.update_time
+          from
+              swiper s left join attachment a on s.attachment_id = a.id
+          <where>
+              <if test="title !=null and title != '' ">
+                  (s.title like concat('%',#{title},'%') or s.sub_title like concat('%',#{title},'%') or s.detail like concat('%',#{title},'%'))
+              </if>
+              <if test="beginTime !=null and endTime !=null">
+                  and (s.create_time between #{beginTime} and #{endTime})
+              </if>
+              and s.type = #{type} and s.is_delete = '15' and a.is_delete = '15';
+          </where>
+      </select>
+  
+      <select id="selectById" resultMap="swiperMap">
+          select
+              s.id, s.type, s.attachment_id, s.title, s.detail, s.link, s.sub_title, s.is_delete, s.create_time, s.update_time,
+              a.id a_id , a.url, a.create_by_user_id, a.create_by_user_name, a.create_by_user_type, a.is_delete, a.create_time, a.update_time
+          from
+              swiper s left join attachment a on s.attachment_id = a.id
+          where
+              s.id = #{id} and s.is_delete = '15' and a.is_delete = '15';
+      </select>
+  
+      <update id="update">
+          update
+              `wjhs`.`swiper`
+          <set>
+              <if test="type != null and type != '' ">
+                  `type` = #{type},
+              </if>
+              <if test="attachmentId != null and attachmentId != '' ">
+                  `attachment_id` = #{attachmentId},
+              </if>
+              <if test="title != null and title != '' ">
+                  `title` = #{title},
+              </if>
+              <if test="subTitle != null and subTitle != '' ">
+                  `sub_title` = #{subTitle},
+              </if>
+              <if test="detail != null and detail != '' ">
+                  `detail` = #{detail},
+              </if>
+              <if test="link != null and link != '' ">
+                  `link` = #{link},
+              </if>
+          </set>
+          where (`id` = #{id});
+      </update>
+  
+  
+  
+      <delete id="delete">
+          update  `wjhs`.`swiper` set is_delete = '14' where id = #{id};
+      </delete>
+  
+  
+  </mapper>
+  ```
+
+  
+
+#### 3、公告管理模块实现
+
++ `PO、VO、DTO` 定义，请参考项目源码
+
+  
+
++ controller层
+
+  ```java
+  @Api(tags = "公告模块")
+  @RestController
+  @RequestMapping("notice")
+  public class NoticeController {
+  
+      @Autowired
+      private NoticeService noticeService;
+  
+      @Autowired
+      private NoticeConverter noticeConverter;
+  
+      @GetMapping("/{id}")
+      @ApiOperation("根据ID查询公告")
+      public R selectById(@PathVariable String id) {
+          Notice notice = noticeService.selectById(id);
+          return R.success(R.SUCCESS_MESSAGE_SELECT, noticeConverter.po2vo(notice));
+      }
+  
+  
+      @GetMapping
+      @ApiOperation("查询公告")
+      public R selectByConditions(@Validated NoticeSelectDto noticeSelectDto) {
+          List<Notice> notices = noticeService.selectByConditions(noticeSelectDto);
+          List<NoticeVo> noticesVos = notices.stream().map(noticeConverter::po2vo).collect(Collectors.toList());
+          return R.success(R.SUCCESS_MESSAGE_SELECT, noticesVos);
+      }
+  
+  
+      @PostMapping
+      @ApiOperation("创建公告")
+      public R create(@Validated @RequestBody NoticeCreateDto noticeCreateDto) {
+          boolean isSuccess = noticeService.create(noticeCreateDto);
+          return isSuccess ? R.success(R.SUCCESS_MESSAGE_INSERT) : R.fail(R.ERROR_MESSAGE_INSERT);
+      }
+  
+  
+      @PutMapping
+      @ApiOperation("更新公告")
+      public R update(@Validated @RequestBody NoticeUpdateDto noticeUpdateDto) {
+          boolean isSuccess = noticeService.update(noticeUpdateDto);
+          return isSuccess ? R.success(R.SUCCESS_MESSAGE_UPDATE) : R.fail(R.ERROR_MESSAGE_UPDATE);
+      }
+  
+  
+      @DeleteMapping("/{id}")
+      @ApiOperation("根据ID查询公告")
+      public R deleteById(@PathVariable String id) {
+          boolean isSuccess = noticeService.deleteById(id);
+          return isSuccess ? R.success(R.SUCCESS_MESSAGE_DELETE) : R.fail(R.ERROR_MESSAGE_DELETE);
+      }
+  }
+  
+  ```
+
+  
+
++ service层
+
+  ```java
+  public interface NoticeService {
+      List<Notice> selectByConditions(NoticeSelectDto noticeSelectDto);
+  
+      boolean create(NoticeCreateDto noticeCreateDto);
+  
+      boolean update(NoticeUpdateDto noticeUpdateDto);
+  
+      boolean deleteById(String id);
+  
+      Notice selectById(String id);
+  }
+  ```
+
+  ```java
+  @Service
+  public class NoticeServiceImpl implements NoticeService {
+  
+      @Autowired
+      private NoticeMapper noticeMapper;
+  
+      @Autowired
+      private NoticeConverter noticeConverter;
+  
+  
+      @Override
+      public List<Notice> selectByConditions(NoticeSelectDto noticeSelectDto) {
+          return noticeMapper.selectByConditions(noticeSelectDto);
+      }
+  
+      @Override
+      public boolean create(NoticeCreateDto noticeCreateDto) {
+          Notice notice = noticeConverter.dto2po(noticeCreateDto);
+          notice.setId(UuidUtil.generator());
+          return noticeMapper.insert(notice) > 0;
+      }
+  
+  
+      @Override
+      public boolean update(NoticeUpdateDto noticeUpdateDto) {
+          Notice finedNotice = noticeMapper.selectById(noticeUpdateDto.getId());
+          if (Objects.isNull(finedNotice)) {
+              throw new CustomException(R.ERROR_RESOURCES_NOTFOUND);
+          }
+          return noticeMapper.update(noticeConverter.dto2po(noticeUpdateDto)) > 0;
+      }
+  
+  
+      @Override
+      public boolean deleteById(String id) {
+          Notice finedNotice = noticeMapper.selectById(id);
+          if (Objects.isNull(finedNotice)) {
+              throw new CustomException(R.ERROR_RESOURCES_NOTFOUND);
+          }
+          return noticeMapper.deleteById(id) > 0;
+      }
+  
+      @Override
+      public Notice selectById(String id) {
+          return noticeMapper.selectById(id);
+      }
+  }
+  
+  ```
+
+  
+
++ mapper层
+
+  ```java
+  @Mapper
+  public interface NoticeMapper {
+      List<Notice> selectByConditions(NoticeSelectDto noticeSelectDto);
+  
+      int insert(Notice notice);
+  
+      Notice selectById(String id);
+  
+      int update(Notice notice);
+  
+      int deleteById(String id);
+  }
+  
+  ```
+
+  ```xml
+  <?xml version="1.0" encoding="UTF-8" ?>
+  <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+  <mapper namespace="com.ilovesshan.wjhs.mapper.NoticeMapper">
+  
+      <sql id="allColumns">
+          `id`, `type`, `title`, `sub_title`, `detail`, `link`, `is_delete`, `create_time`, `update_time`
+      </sql>
+  
+      <select id="selectByConditions" resultType="com.ilovesshan.wjhs.beans.pojo.Notice">
+          select
+              <include refid="allColumns" />
+          from  `wjhs`.`notice`
+          <where>
+              <if test="title !=null and title != '' ">
+                  title like concat('%',#{title},'%') or sub_title like concat('%',#{title},'%')
+              </if>
+              <if test="detail !=null and detail != '' ">
+                  and detail like concat('%',#{detail},'%')
+              </if>
+              <if test="beginTime !=null and endTime !=null">
+                  and (create_time between #{beginTime} and #{endTime})
+              </if>
+              and `type` = #{type} and is_delete = '15'
+          </where>
+      </select>
+  
+  
+      <insert id="insert">
+          insert into
+              `wjhs`.`notice` (`id`, `type`, `title`, `sub_title`, `detail`, `link`)
+          values
+              (#{id}, #{type}, #{title}, #{subTitle}, #{detail}, #{link});
+      </insert>
+  
+  
+      <update id="update">
+          update
+              `wjhs`.`notice`
+          set
+              <if test="type != null and type != '' ">
+                  `type` = #{type},
+              </if>
+              <if test="title != null and title != '' ">
+                  `title` = #{title},
+              </if>
+              <if test="subTitle != null and subTitle != '' ">
+                  `sub_title` = #{subTitle},
+              </if>
+              <if test="detail != null and detail != '' ">
+                  `detail` = #{detail},
+              </if>
+              <if test="link != null and link != '' ">
+                  `link` = #{link}
+              </if>
+          where (`id` = #{id});
+      </update>
+  
+  
+      <delete id="deleteById">
+          update `wjhs`.`notice` set is_delete = '14' where id = #{id};
+      </delete>
+  
+  
+      <select id="selectById" resultType="com.ilovesshan.wjhs.beans.pojo.Notice">
+          select <include refid="allColumns" /> from  `wjhs`.`notice` where id = #{id} and is_delete = '15';
+      </select>
+  
+  </mapper>
+  ```
+
+  
+
