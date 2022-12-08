@@ -1348,3 +1348,950 @@ export function canAccess(code: string): boolean {
 import "./permission";
 ```
 
+
+
+### 第五章、轮播图和通知公告
+
+#### 1、定义接口
+
++ swiper
+
+  ```typescript
+  export interface ISwiperCreateOrUpdate {
+    id: string,
+    type: number,
+    attachmentId: string,
+    title: string,
+    subTitle: string
+    detail: string,
+    link: string,
+    attachment?: IAttachment,
+  }
+  
+  interface IAttachment {
+    id?: string,
+    url?: string,
+    createByUserId?: string,
+    createByUserName?: string,
+    createByUserType?: string,
+    createTime?: string,
+  }
+  
+  export interface ISwiper {
+    id: string,
+    type: string,
+    attachmentId: string,
+    title: string,
+    subTitle: string,
+    detail: string,
+    link: string,
+    attachment: IAttachment,
+    createTime: string,
+  }
+  
+  export interface ISwiperSelect {
+    type: number,
+    title?: string,
+    beginTime?: string
+    endTime?: string
+    tempTime?: string
+  }
+  
+  
+  ```
+
+  
+
++ notice
+
+  ```typescript
+  export interface INoticeCreateOrUpdate {
+    id?: string,
+    type: number,
+    title: string,
+    subTitle?: string,
+    detail?: string,
+    link?: string,
+  }
+  
+  export interface INoticeSelect {
+    type: number,
+    title?: string ,
+    detail?: string
+    beginTime?: string
+    endTime?: string
+    tempTime?: string
+  }
+  
+  
+  export interface INotice {
+    id: string
+    type: string
+    title: string
+    subTitle: string
+    detail: string
+    link: string
+    createTime: string
+  }
+  
+  ```
+
+  
+
+#### 2、API封装
+
++ swiper
+
+  ```typescript
+  import request from "./request";
+  import type { ISwiperCreateOrUpdate, ISwiperSelect } from "../views/system/pages/swiper/type";
+  
+  // 获取轮播图列表
+  export function swiperList(swiperSelect: ISwiperSelect) {
+    return request({
+      method: "GET",
+      url: `/swiper`,
+      params: swiperSelect
+    });
+  }
+  
+  
+  // 新增轮播图
+  export function swiperInsert(swiper: ISwiperCreateOrUpdate) {
+    return request({
+      method: "POST",
+      url: `/swiper`,
+      data: swiper,
+    });
+  }
+  
+  
+  // 更新轮播图
+  export function swiperUpdate(swiper: ISwiperCreateOrUpdate) {
+    return request({
+      method: "PUT",
+      url: `/swiper`,
+      data: swiper,
+    });
+  }
+  
+  
+  // 删除轮播图
+  export function swiperDelete(id: string) {
+    return request({
+      method: "DELETE",
+      url: `/swiper/${id}`
+    });
+  }
+  
+  
+  // 根据ID获取轮播图
+  export function swiperGetById(id: string) {
+    return request({
+      method: "GET",
+      url: `/swiper/${id}`
+    });
+  }
+  ```
+
+  
+
++ notice
+
+  ```typescript
+  import request from "./request";
+  import type { INoticeSelect, INoticeCreateOrUpdate } from "../views/system/pages/Notice/type";
+  
+  // 获取通知公告列表
+  export function noticeList(noticeSelect: INoticeSelect) {
+    return request({
+      method: "GET",
+      url: `/notice`,
+      params: noticeSelect,
+    });
+  }
+  
+  // 新增通知公告
+  export function noticeInsert(notice: INoticeCreateOrUpdate) {
+    return request({
+      method: "POST",
+      url: `/notice`,
+      data: notice,
+    });
+  }
+  
+  // 更新通知公告
+  export function noticeUpdate(notice: INoticeCreateOrUpdate) {
+    return request({
+      method: "PUT",
+      url: `/notice`,
+      data: notice,
+    });
+  }
+  
+  
+  // 删除通知公告
+  export function noticeDelete(id: string) {
+    return request({
+      method: "DELETE",
+      url: `/notice/${id}`
+    });
+  }
+  
+  
+  
+  // 根据ID查询公告
+  export function noticeGetById(id: string) {
+    return request({
+      method: "GET",
+      url: `/notice/${id}`
+    });
+  }
+  ```
+
+  
+
+#### 3、轮播图实现
+
++ store
+
+  ```typescript
+  import { defineStore } from "pinia";
+  import { swiperList } from "../../api/swiper";
+  import ServiceConfig from "../../config/serviceConfig";
+  import { ISwiper, ISwiperSelect } from "../../views/system/pages/swiper/type";
+  
+  interface ISwiperStore {
+    type: number,
+    list: Array<ISwiper>
+  }
+  
+  
+  const swiperModule = defineStore("swiperStore", {
+    state() {
+      return {
+        type: 0,
+        list: []
+      } as ISwiperStore
+    },
+  
+    getters: {},
+  
+    actions: {
+      saveSwiper(SwiperList: Array<ISwiper>) {
+        this.list = SwiperList;
+      },
+  
+      saveType(type: number) {
+        this.type = type;
+      },
+  
+      async requestSwiper(requestData: ISwiperSelect) {
+        const result = await swiperList(requestData);
+        const swiperData: Array<ISwiper> = result.data;
+        swiperData.map(swiper => {
+          const baseUrl = import.meta.env.MODE == "development" ? ServiceConfig.devBaseUrl : ServiceConfig.prodBaseUrl;
+          swiper.attachment.url = `${baseUrl + swiper.attachment.url}`
+          return swiper;
+        })
+  
+        this.saveSwiper(result.data as Array<ISwiper>);
+        this.saveType(requestData.type);
+      }
+    }
+  });
+  
+  
+  export default swiperModule;
+  ```
+
+  
+
++ 父层组件(tab)
+
+  ```vue
+  <template>
+    <div id="swiper-page">
+      <el-tabs v-model="activeName" @tab-click="handleClick">
+        <el-tab-pane label="小程序" name="wx"> <swiper-list-cpn :list="noticeLIst" :currentIndex="31" />
+        </el-tab-pane>
+        <el-tab-pane label="App" name="app"> <swiper-list-cpn :list="noticeLIst" :currentIndex="32" />
+        </el-tab-pane>
+      </el-tabs>
+    </div>
+  </template>
+  
+  <script lang="ts" setup>
+  import { ref, computed } from 'vue'
+  import { swiperStore } from '../../../../store';
+  
+  import swiperListCpn from "./components/swiper-list.vue"
+  
+  const activeName = ref('wx')
+  
+  const noticeLIst = computed(() => swiperStore.list);
+  const handleClick = () => swiperStore.requestSwiper({ type: activeName.value.includes("wx") ? 32 : 31 });
+  
+  // 默认加载请求小程序轮播图
+  swiperStore.requestSwiper({ type: 31 });
+  
+  </script>
+  
+  <style lang="less" scoped>
+  #swiper-page {}
+  </style>
+  ```
+
+  
+
++ 子层组件(筛选条件和数据列表)
+
+  ```vue
+  <template>
+    <div id="swiper-list-container">
+      <!-- 头部 -->
+      <div class="conditions-container">
+        <el-card shadow="never">
+  
+          <!-- 搜索条件框 -->
+          <el-row :gutter="20" class="condition-input-container">
+            <el-col :span="6">
+              <el-form-item label="标题">
+                <el-input v-model="selectedConditions.title" placeholder="标题关键字" />
+              </el-form-item>
+            </el-col>
+            <el-col :span="6">
+              <el-form-item label="创建时间">
+                <el-date-picker v-model="selectedConditions.tempTime" format="YYYY-MM-DD" type="daterange"
+                  range-separator="到" value-format="YYYY-MM-DD HH:mm:ss" @change="datePickerChange"
+                  start-placeholder="开始日期" end-placeholder="结束日期" />
+              </el-form-item>
+            </el-col>
+          </el-row>
+  
+          <!-- 搜索、重置 按钮-->
+          <el-row class="search-and-reset-container">
+            <el-button @click="handleSearch" type="primary">搜索 <el-icon class="el-icon--right">
+                <Search />
+              </el-icon>
+            </el-button>
+  
+            <el-button @click="handleReset">重置 <el-icon class="el-icon--right">
+                <RefreshRight />
+              </el-icon>
+            </el-button>
+          </el-row>
+  
+          <!-- 新增 、修改、删除、导出 按钮-->
+          <el-row>
+            <el-button @click="handleInsert" plain type="primary">新增 <el-icon class="el-icon--right">
+                <Plus />
+              </el-icon>
+            </el-button>
+  
+            <el-button @click="handleUpdate(selectedIds[0])" type="success" :disabled="(selectedIds.length != 1)"
+              plain>更新<el-icon class="el-icon--right">
+                <Edit />
+              </el-icon>
+            </el-button>
+  
+            <el-button @click="handleDelete(selectedIds[0])" type="danger" :disabled="(selectedIds.length < 1)"
+              plain>删除<el-icon class="el-icon--right">
+                <Delete />
+              </el-icon>
+            </el-button>
+  
+            <el-button @click="handleExport" type="warning" :disabled="(selectedIds.length < 1)" plain>导出<el-icon
+                class="el-icon--right">
+                <Download />
+              </el-icon>
+            </el-button>
+          </el-row>
+  
+        </el-card>
+      </div>
+  
+      <!-- 表格数据 -->
+      <div id="notice-list-container">
+        <el-card shadow="never">
+          <el-table :data="list" style="width: 100%" @selection-change="handleSelectionChange">
+            <el-table-column type="selection" width="55" />
+            <el-table-column type="index" width="50" />
+            <el-table-column prop="title" show-overflow-tooltip label="标题" width="240" />
+            <el-table-column prop="link" show-overflow-tooltip label="图片" width="240">
+              <template #default="scope">
+                <el-image :preview-teleported="true" style="width: 200px; height: 50px" :src="scope.row.attachment.url"
+                  :preview-src-list="[scope.row.attachment.url]">
+                </el-image>
+              </template>
+            </el-table-column>
+            <el-table-column prop="link" show-overflow-tooltip label="跳转链接" width="240">
+              <template #default="scope">
+                <el-link :href="scope.row.link" target="_blank">{{ scope.row.link }}</el-link>
+              </template>
+            </el-table-column>
+            <el-table-column prop="createTime" label="创建时间" width="240" align="center" />
+            <el-table-column fixed="right" label="操作" width="200">
+              <template #default="scope">
+                <el-button @click="handleUpdate(scope.row.id)" link type="primary" size="small">更新</el-button>
+                <el-button @click="handleDelete(scope.row.id)" link type="danger" size="small">删除</el-button>
+              </template>
+            </el-table-column>
+          </el-table>
+        </el-card>
+      </div>
+    </div>
+  
+    <el-dialog v-model="dialogVisible" title="新增/更新" width="30%" :before-close="() => dialogVisible = false">
+      <el-form label-position="left" :model="createOrUpdateData" label-width="120px">
+        <el-form-item label="标题">
+          <el-input v-model="createOrUpdateData.title" />
+        </el-form-item>
+        <el-form-item label="子标题">
+          <el-input type="textarea" :rows="4" v-model="createOrUpdateData.subTitle" />
+        </el-form-item>
+        <el-form-item label="详情信息">
+          <el-input type="textarea" :rows="2" v-model="createOrUpdateData.detail" />
+        </el-form-item>
+        <el-form-item label="图片">
+          <el-upload style="width:200px; height:80px; border: 1px solid #dcdfe6; line-height: 80px; text-align: center;"
+            :action="baseUrl + '/attachments'" :headers="uploadHeader" :show-file-list="false"
+            :on-success="handleAvatarSuccess" :before-upload="beforeAvatarUpload">
+            <img v-if="imageUrl" :src="imageUrl" class="avatar" width="200" height="80" />
+            <el-icon v-else class="avatar-uploader-icon">
+              <Plus />
+            </el-icon>
+          </el-upload>
+        </el-form-item>
+        <el-form-item label="跳转链接">
+          <el-input v-model="createOrUpdateData.link" />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <span class="dialog-footer">
+          <el-button type="primary" @click="handleCreateOrUpdate">确定</el-button>
+          <el-button @click="() => dialogVisible = false"> 取消</el-button>
+        </span>
+      </template>
+    </el-dialog>
+  
+  </template>
+  
+  <script lang="ts" setup>
+  
+  import { toRefs, ref, reactive } from "vue";
+  import { ElMessage, ElMessageBox } from "element-plus";
+  import type { UploadProps } from 'element-plus'
+  import { Delete, Download, Search, RefreshRight, Plus, Edit } from '@element-plus/icons-vue';
+  
+  import type { ISwiper, ISwiperSelect, ISwiperCreateOrUpdate } from "../type"
+  
+  import { swiperStore } from "../../../../../store";
+  import { deepClone } from "../../../../../utils/deep-clone"
+  import { swiperGetById, swiperUpdate, swiperInsert, swiperDelete } from "../../../../../api/swiper";
+  import ServiceConfig from "../../../../../config/serviceConfig";
+  import { SCache } from "../../../../../utils/cache";
+  
+  
+  //子组件接收父组件数据
+  const props = defineProps({
+    list: Array<ISwiper>,
+    currentIndex: {
+      required: true,
+      type: Number
+    },
+  });
+  const { list, currentIndex } = toRefs(props);
+  
+  const baseUrl = import.meta.env.MODE == "development" ? ServiceConfig.devBaseUrl : ServiceConfig.prodBaseUrl;
+  
+  const uploadHeader = {
+    Authorization: "Bearer " + SCache.get("token"),
+  }
+  
+  
+  const selectedIds = ref<Array<string>>([]);
+  const dialogVisible = ref<boolean>(false);
+  const imageUrl = ref<string>("");
+  
+  const handleSelectionChange = (selected: Array<ISwiper>) => {
+    selectedIds.value = selected.map((swiper: ISwiper) => swiper.id)
+  }
+  
+  // 默认的查询条件
+  const defaultSelectConditions: ISwiperSelect = {
+    type: currentIndex.value,
+    title: "",
+    tempTime: "",
+    beginTime: "",
+    endTime: "",
+  }
+  
+  // 新增或者更新的数据
+  const defaultCreateOrUpdateDate: ISwiperCreateOrUpdate = {
+    id: "",
+    attachmentId: "",
+    type: currentIndex.value,
+    title: "",
+    subTitle: "",
+    detail: "",
+    link: "",
+    attachment: {},
+  }
+  
+  
+  const selectedConditions = reactive(deepClone<ISwiperSelect>(defaultSelectConditions));
+  let createOrUpdateData = reactive(deepClone<ISwiperCreateOrUpdate>(defaultCreateOrUpdateDate));
+  
+  // 搜索
+  const handleSearch = () => {
+    const requestData = deepClone<ISwiperSelect>(selectedConditions);
+    delete requestData["tempTime"]
+    swiperStore.requestSwiper(requestData)
+  };
+  
+  // 重置
+  const handleReset = () => {
+    Object.assign(selectedConditions, deepClone<ISwiperSelect>(defaultSelectConditions));
+    handleSearch();
+  };
+  
+  
+  // 新增(弹框)
+  const handleInsert = () => {
+    createOrUpdateData = reactive(deepClone<ISwiperCreateOrUpdate>(defaultCreateOrUpdateDate));
+    imageUrl.value = "";
+    dialogVisible.value = true
+  };
+  
+  
+  // 更新(弹框)
+  const handleUpdate = async (id: string) => {
+    const result = await swiperGetById(id);
+    createOrUpdateData = reactive(result.data);
+    imageUrl.value = (baseUrl + createOrUpdateData.attachment?.url + '?t=' + new Date().getTime())
+    dialogVisible.value = true;
+  }
+  
+  
+  // 删除
+  const handleDelete = (id: string) => {
+    ElMessageBox.confirm('确定要删除吗?', '删除', { type: "error" })
+      .then(async () => {
+        const result = await swiperDelete(id);
+        const { code, message } = result
+        if (code == 200) {
+          ElMessage({ type: "success", message });
+          handleSearch();
+        } else {
+          ElMessage({ type: "success", message });
+        }
+      })
+      .catch(() => { })
+  }
+  
+  // 导出
+  const handleExport = () => ElMessage({ type: "warning", message: "功能开发中..." })
+  
+  // 新增或者更新
+  const handleCreateOrUpdate = async () => {
+    let result = null;
+    if (createOrUpdateData.id) {
+      // 更新
+      result = await swiperUpdate(createOrUpdateData);
+    } else {
+      // 新增
+      result = await swiperInsert(createOrUpdateData);
+    }
+  
+    const { code, message } = result
+    if (code == 200) {
+      dialogVisible.value = false;
+      ElMessage({ type: "success", message });
+      handleSearch();
+    } else {
+      ElMessage({ type: "success", message });
+    }
+  }
+  
+  const datePickerChange = (value: any) => {
+    value[1] = value[1].replace("00:00:00", "23:59:59");
+    selectedConditions.beginTime = value[0];
+    selectedConditions.endTime = value[1];
+  }
+  
+  const handleAvatarSuccess: UploadProps['onSuccess'] = (response) => {
+    createOrUpdateData.attachment!.url = response.data.url;
+    createOrUpdateData.attachmentId = response.data.id;
+    imageUrl.value = baseUrl + response.data.url;
+  }
+  
+  const beforeAvatarUpload: UploadProps['beforeUpload'] = (rawFile) => {
+    if (rawFile.type !== 'image/jpeg') {
+      ElMessage.error('Avatar picture must be JPG format!')
+      return false
+    } else if (rawFile.size / 1024 / 1024 > 4) {
+      ElMessage.error('Avatar picture size can not exceed 4MB!')
+      return false
+    }
+    return true
+  }
+  
+  </script>
+  
+  <style lang="less" scoped>
+  #swiper-list-container {}
+  </style>
+  ```
+
+  
+
+#### 4、通知公告实现
+
++ store
+
+  ```typescript
+  import { defineStore } from "pinia";
+  import { noticeList } from "../../api/notice";
+  import type { INotice, INoticeSelect } from "../../views/system/pages/notice/type";
+  
+  interface INoticeStore {
+    type: number,
+    list: Array<INotice>
+  }
+  
+  const noticeModule = defineStore("noticeStore", {
+    state(): INoticeStore {
+      return {
+        type: 0,
+        list: []
+      }
+    },
+  
+    getters: {
+  
+    },
+  
+    actions: {
+      saveNotice(noticeList: Array<INotice>) {
+        this.list = noticeList;
+      },
+  
+      saveType(type: number) {
+        this.type = type;
+      },
+  
+      async requestNotice(requestData: INoticeSelect) {
+        const result = await noticeList(requestData);
+        this.saveNotice(result.data as Array<INotice>);
+        this.saveType(requestData.type);
+      }
+    }
+  });
+  
+  export default noticeModule;
+  ```
+
+  
+
++ 父层组件(tab)
+
+  ```vue
+  <template>
+    <div id="notice-page">
+      <el-tabs v-model="activeName" @tab-click="handleClick">
+        <el-tab-pane label="小程序" name="wx"> <notice-list-cpn :list="noticeLIst" :currentIndex="31" />
+        </el-tab-pane>
+        <el-tab-pane label="App" name="app"> <notice-list-cpn :list="noticeLIst" :currentIndex="32" />
+        </el-tab-pane>
+      </el-tabs>
+    </div>
+  </template>
+  
+  <script lang="ts" setup>
+  import { ref, computed } from 'vue'
+  
+  import noticeListCpn from "./components/notice-list.vue";
+  
+  import { noticeStore } from '../../../../store';
+  
+  const activeName = ref("wx")
+  
+  const noticeLIst = computed(() => noticeStore.list);
+  const handleClick = () => noticeStore.requestNotice({ type: activeName.value.includes("wx") ? 32 : 31 });
+  
+  // 默认加载请求小程序通知公告
+  noticeStore.requestNotice({ type: 31 });
+  
+  </script>
+  
+  <style lang="less" scoped>
+  #notice-page {
+    background-color: transparent;
+  }
+  </style>
+  ```
+
+  
+
++ 子层组件(筛选条件和数据列表)
+
+  ```vue
+  <template>
+    <div id="notice-list-container">
+      <!-- 头部 -->
+      <div class="conditions-container">
+        <el-card shadow="never">
+  
+          <!-- 搜索条件框 -->
+          <el-row :gutter="20" class="condition-input-container">
+            <el-col :span="6">
+              <el-form-item label="标题">
+                <el-input v-model="selectedConditions.title" placeholder="标题关键字" />
+              </el-form-item>
+            </el-col>
+            <el-col :span="6">
+              <el-form-item label="详情">
+                <el-input v-model="selectedConditions.detail" placeholder="详情关键字" />
+              </el-form-item>
+            </el-col>
+            <el-col :span="6">
+              <el-form-item label="创建时间">
+                <el-date-picker v-model="selectedConditions.tempTime" format="YYYY-MM-DD" type="daterange"
+                  range-separator="到" value-format="YYYY-MM-DD HH:mm:ss" @change="datePickerChange"
+                  start-placeholder="开始日期" end-placeholder="结束日期" />
+              </el-form-item>
+            </el-col>
+          </el-row>
+  
+          <!-- 搜索、重置 按钮-->
+          <el-row class="search-and-reset-container">
+            <el-button @click="handleSearch" type="primary">搜索 <el-icon class="el-icon--right">
+                <Search />
+              </el-icon>
+            </el-button>
+  
+            <el-button @click="handleReset">重置 <el-icon class="el-icon--right">
+                <RefreshRight />
+              </el-icon>
+            </el-button>
+          </el-row>
+  
+          <!-- 新增 、修改、删除、导出 按钮-->
+          <el-row>
+            <el-button @click="handleInsert" plain type="primary">新增 <el-icon class="el-icon--right">
+                <Plus />
+              </el-icon>
+            </el-button>
+  
+            <el-button @click="handleUpdate(selectedIds[0])" type="success" :disabled="(selectedIds.length != 1)"
+              plain>更新<el-icon class="el-icon--right">
+                <Edit />
+              </el-icon>
+            </el-button>
+  
+            <el-button @click="handleDelete(selectedIds[0])" type="danger" :disabled="(selectedIds.length < 1)"
+              plain>删除<el-icon class="el-icon--right">
+                <Delete />
+              </el-icon>
+            </el-button>
+  
+            <el-button @click="handleExport" type="warning" :disabled="(selectedIds.length < 1)" plain>导出<el-icon
+                class="el-icon--right">
+                <Download />
+              </el-icon>
+            </el-button>
+          </el-row>
+  
+        </el-card>
+      </div>
+  
+      <!-- 表格数据 -->
+      <div id="notice-list-container">
+        <el-card shadow="never">
+          <el-table :data="list" style="width: 100%" @selection-change="handleSelectionChange">
+            <el-table-column type="selection" width="55" />
+            <el-table-column type="index" width="50" />
+            <el-table-column prop="title" show-overflow-tooltip label="标题" width="240" />
+            <el-table-column prop="subTitle" show-overflow-tooltip label="子标题" width="600" />
+            <el-table-column prop="link" show-overflow-tooltip label="跳转链接" width="240">
+              <template #default="scope">
+                <el-link :href="scope.row.link" target="_blank">{{ scope.row.link }}</el-link>
+              </template>
+            </el-table-column>
+            <el-table-column prop="createTime" label="创建时间" width="240" />
+            <el-table-column fixed="right" label="操作" width="200">
+              <template #default="scope">
+                <el-button @click="handleUpdate(scope.row.id)" link type="primary" size="small">更新</el-button>
+                <el-button @click="handleDelete(scope.row.id)" link type="danger" size="small">删除</el-button>
+              </template>
+            </el-table-column>
+          </el-table>
+        </el-card>
+      </div>
+    </div>
+  
+    <el-dialog v-model="dialogVisible" title="新增/更新" width="30%" :before-close="() => dialogVisible = false">
+      <el-form label-position="left" :model="createOrUpdateData" label-width="120px">
+        <el-form-item label="标题">
+          <el-input v-model="createOrUpdateData.title" />
+        </el-form-item>
+        <el-form-item label="子标题">
+          <el-input type="textarea" :rows="4" v-model="createOrUpdateData.subTitle" />
+        </el-form-item>
+        <el-form-item label="详情信息">
+          <el-input type="textarea" :rows="2" v-model="createOrUpdateData.detail" />
+        </el-form-item>
+        <el-form-item label="跳转链接">
+          <el-input v-model="createOrUpdateData.link" />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <span class="dialog-footer">
+          <el-button type="primary" @click="handleCreateOrUpdate">确定</el-button>
+          <el-button @click="() => dialogVisible = false"> 取消</el-button>
+        </span>
+      </template>
+    </el-dialog>
+  
+  </template>
+  
+  <script lang="ts" setup>
+  
+  import { toRefs, ref, reactive } from "vue";
+  import { ElMessage, ElMessageBox } from "element-plus";
+  import { Delete, Download, Search, RefreshRight, Plus, Edit } from '@element-plus/icons-vue'
+  import type { INotice, INoticeSelect, INoticeCreateOrUpdate } from "../type"
+  import { noticeStore } from "../../../../../store";
+  import { deepClone } from "../../../../../utils/deep-clone"
+  import { noticeGetById, noticeUpdate, noticeInsert, noticeDelete } from "../../../../../api/notice";
+  
+  //子组件接收父组件数据
+  const props = defineProps({
+    list: Array<INotice>,
+    currentIndex: {
+      required: true,
+      type: Number
+    },
+  });
+  const { list, currentIndex } = toRefs(props);
+  
+  const selectedIds = ref<Array<string>>([]);
+  const dialogVisible = ref<boolean>(false);
+  
+  const handleSelectionChange = (selected: Array<INotice>) => {
+    selectedIds.value = selected.map((notice: INotice) => notice.id)
+  }
+  
+  // 默认的查询条件
+  const defaultSelectConditions: INoticeSelect = {
+    type: currentIndex.value,
+    title: "",
+    detail: "",
+    tempTime: "",
+    beginTime: "",
+    endTime: "",
+  }
+  
+  // 新增或者更新的数据
+  const defaultCreateOrUpdateDate: INoticeCreateOrUpdate = {
+    id: "",
+    type: currentIndex.value,
+    title: "",
+    subTitle: "",
+    detail: "",
+    link: "",
+  }
+  
+  
+  const selectedConditions = reactive(deepClone<INoticeSelect>(defaultSelectConditions));
+  let createOrUpdateData = reactive(deepClone<INoticeCreateOrUpdate>(defaultCreateOrUpdateDate));
+  
+  // 搜索
+  const handleSearch = () => {
+    const requestData = deepClone<INoticeSelect>(selectedConditions);
+    delete requestData["tempTime"]
+    noticeStore.requestNotice(requestData)
+  };
+  
+  // 重置
+  const handleReset = () => {
+    Object.assign(selectedConditions, deepClone<INoticeSelect>(defaultSelectConditions));
+    handleSearch();
+  };
+  
+  
+  // 新增(弹框)
+  const handleInsert = () => {
+    createOrUpdateData = reactive(deepClone<INoticeCreateOrUpdate>(defaultCreateOrUpdateDate));
+    dialogVisible.value = true
+  };
+  
+  
+  // 更新(弹框)
+  const handleUpdate = async (id: string) => {
+    const result = await noticeGetById(id);
+    createOrUpdateData = reactive(result.data);
+    dialogVisible.value = true;
+  }
+  
+  
+  // 删除
+  const handleDelete = (id: string) => {
+    ElMessageBox.confirm('确定要删除吗?', '删除', { type: "error" })
+      .then(async () => {
+        const result = await noticeDelete(id);
+        const { code, message } = result
+        if (code == 200) {
+          ElMessage({ type: "success", message });
+          handleSearch();
+        } else {
+          ElMessage({ type: "success", message });
+        }
+      })
+      .catch(() => { })
+  }
+  
+  // 导出
+  const handleExport = () => ElMessage({ type: "warning", message: "功能开发中..." })
+  
+  // 新增或者更新
+  const handleCreateOrUpdate = async () => {
+    let result = null;
+    if (createOrUpdateData.id) {
+      // 更新
+      result = await noticeUpdate(createOrUpdateData);
+    } else {
+      // 新增
+      result = await noticeInsert(createOrUpdateData);
+    }
+  
+    const { code, message } = result
+    if (code == 200) {
+      dialogVisible.value = false;
+      ElMessage({ type: "success", message });
+      handleSearch();
+    } else {
+      ElMessage({ type: "success", message });
+    }
+  }
+  
+  const datePickerChange = (value: any) => {
+    // if (value[0] === value[1]) {
+    //   value[1] = value[1].replace("00:00:00", "23:59:59");
+    // }
+    value[1] = value[1].replace("00:00:00", "23:59:59");
+    selectedConditions.beginTime = value[0];
+    selectedConditions.endTime = value[1];
+  }
+  
+  </script>
+  
+  <style lang="less" scoped>
+  #notice-list-container {
+    background: transparent;
+  }
+  </style>
+  ```
+
+  
