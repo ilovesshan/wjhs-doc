@@ -728,3 +728,224 @@ class _SplashPageState extends State<SplashPage> {
 }
 ```
 
+
+
+### 第五章、轮播图和通知公告
+
+#### 1、Api封装
+
+```dart
+import 'package:app/api/apis.dart';
+import 'package:app/model/notice_model.dart';
+import 'package:common_utils/common_utils.dart';
+
+class NoticeService {
+  // 获取公告
+  static Future<List<NoticeModel>> requestNotice() async {
+    List<NoticeModel> noticeModels = [];
+    final result = await HttpHelper.getInstance().get(Apis.notice+"?type=32");
+    if (result["code"] == 200) {
+      for (var json in result["data"]) {
+        noticeModels.add(NoticeModel.fromJson(json));
+      }
+    }
+    return noticeModels;
+  }
+}
+
+```
+
+```dart
+import 'package:app/api/apis.dart';
+import 'package:app/model/swiper_model.dart';
+import 'package:common_utils/common_utils.dart';
+
+class SwiperService {
+  // 获取轮播图
+  static Future<List<SwiperModel>> requestSwiper() async {
+    List<SwiperModel> swiperModels = [];
+    final result = await HttpHelper.getInstance().get(Apis.swiper +"?type=32");
+    if (result["code"] == 200) {
+      for (var json in result["data"]) {
+        swiperModels.add(SwiperModel.fromJson(json));
+      }
+    }
+    return swiperModels;
+  }
+}
+```
+
+
+
+#### 2、轮播图通知公告实现
+
+```dart
+import 'package:app/model/notice_model.dart';
+import 'package:app/model/swiper_model.dart';
+import 'package:app/router/router.dart';
+import 'package:app/service/notice_service.dart';
+import 'package:app/service/swiper_service.dart';
+import 'package:common_utils/common_utils.dart';
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/painting.dart';
+import 'package:flutter/rendering.dart';
+import 'package:flutter/services.dart';
+import 'package:amap_flutter_base/amap_flutter_base.dart';
+
+
+class HomePage extends StatefulWidget {
+  const HomePage({Key? key}) : super(key: key);
+
+  @override
+  State<HomePage> createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> with AutomaticKeepAliveClientMixin {
+
+  final List<String> _bannerList = [];
+
+  final List<String> _marqueeTextList = [ ];
+
+  List<SwiperModel> swiperModels = [];
+  List<NoticeModel> noticeModels = [];
+
+  @override
+  void initState() {
+    super.initState();
+
+    _requestHomeData();
+  }
+
+  _requestHomeData() async {
+     swiperModels = await SwiperService.requestSwiper();
+     noticeModels = await NoticeService.requestNotice();
+
+    _bannerList.clear();
+    _marqueeTextList.clear();
+
+    for (var swiperModel in swiperModels) {
+      _bannerList.add(HttpHelperConfig.serviceList[HttpHelperConfig.selectIndex]+ "${swiperModel.attachment?.url}");
+    }
+    for (var noticeModel in noticeModels) {
+      _marqueeTextList.add("${noticeModel.subTitle}");
+    }
+    setState(() {});
+  }
+
+
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFFF8F8F8),
+      appBar: AppBar(
+        elevation: 0, centerTitle: true, toolbarHeight: 49.h, backgroundColor: Get.theme.primaryColor, systemOverlayStyle: const SystemUiOverlayStyle(statusBarIconBrightness: Brightness.light),
+        title: const Text("网捷回收", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFFFFFFFF))),
+        actions: [
+          GestureDetector(
+            child: Container(
+              margin: EdgeInsets.only(right: 10.w),
+              child: Image.asset("assets/common/scan.png", width: 25.w, height: 25.w,),
+            ),
+            onTap: ()=> QrScannerUtil.scan(onScanSuccess: (res){
+               if(res.toString().startsWith("http://www.ilovesshan.com/?payId=")){
+                 // 处理支付逻辑
+                  EasyLoading.showToast(res.toString());
+               }else{
+                 // 处理其他逻辑
+               }
+            }),
+          )
+        ],
+      ),
+      body: Column(
+        children: [
+          Stack(
+            clipBehavior: Clip.none,
+            children: [
+              // 背景填充
+              Container(height: 200.h, width: Get.width, alignment: Alignment.topCenter, child: Container(width:Get.width, height: 80.h, color: Get.theme.primaryColor)),
+              // 轮播图模块
+              Positioned(
+                left: 5.w, right: 5.w,
+                child: ClipRRect(borderRadius: BorderRadius.circular(20.r), child: SwiperWidget.build(list: _bannerList, onItemPressed: (index)=>{
+                  Get.toNamed(YFRouter.webviewPlugin, arguments: {"path": swiperModels[index].link, "title":swiperModels[index].title})
+                }),
+              ))
+            ],
+          ),
+
+          // 公告
+          Container(
+            margin: EdgeInsets.only(top: 10.h), padding: EdgeInsets.symmetric(horizontal: 10.w), width:Get.width, height: 40.h, color: Colors.white,
+            child: Row(
+              children: [
+                Image.asset("assets/common/notice.png", width: 15.w, height: 15.w,),
+                SizedBox(width: 10.h,),
+                Expanded(child: Container(alignment: Alignment.center, height: 20.h, child: buildMarqueeWidget(_marqueeTextList, onItemPressed: (index)=>{
+                  Get.toNamed(YFRouter.noticeDetail, arguments: {"notice":noticeModels[index]}),
+                }))),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// 保存页面状态
+  @override
+  bool get wantKeepAlive => true;
+
+  ///上下轮播 安全提示
+  Widget buildMarqueeWidget(List<String> loopList, {OnItemPressedWithIndex? onItemPressed}) {
+    return MarqueeWidget(
+      //子Item构建器
+      itemBuilder: (BuildContext context, int index) {
+        String itemStr = loopList[index];
+        //通常可以是一个 Text文本
+        return GestureDetector(
+          child: Tooltip(message: itemStr, child: Text(itemStr, overflow: TextOverflow.ellipsis)),
+          onTap: ()=> { if(onItemPressed != null)onItemPressed(index)}
+        );
+      },
+      //循环的提示消息数量
+      count: loopList.length,
+    );
+  }
+}
+
+```
+
+
+
+#### 3、通知详情实现
+
+```dart
+import 'package:app/model/notice_model.dart';
+import 'package:common_utils/common_utils.dart';
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
+
+class NoticeDetailPage extends StatefulWidget {
+  const NoticeDetailPage({Key? key}) : super(key: key);
+  @override
+  State<NoticeDetailPage> createState() => _NoticeDetailPageState();
+}
+
+class _NoticeDetailPageState extends State<NoticeDetailPage> {
+  
+  // 仅仅做简单展示
+  NoticeModel notice = Get.arguments["notice"];
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: NavBar.showWidthPrimaryTheme("${notice.title}"),
+      body: Padding(padding: EdgeInsets.all(10.w), child: Text("${notice.subTitle}")),
+    );
+  }
+}
+
+```
+
