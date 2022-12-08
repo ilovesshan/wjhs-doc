@@ -387,3 +387,345 @@ export {
   ```
 
   
+
+### 第四章、轮播图和通知公告
+
+#### 1、封装API
+
+```typescript
+// 获取轮播图数据接口
+export function requestSwiper() {
+  return get(`/swiper?type=31`, {}, false)
+}
+
+// 获取通知公告接口
+export function requestNotice() {
+  return get(`/notice?type=31`, {}, false)
+}
+```
+
+
+
+#### 2、公共webview界面
+
++ 新建一个`webview` page，并且在 `app.json` 文件中注册
+
+  ```json
+  {
+    "pages": [
+    	// ...
+      "components/webView/webView"
+    ],
+    // ...
+  }
+  ```
+
+  
+
++ wxml
+
+  ```html
+  <web-view src="{{ pagePath }}"></web-view>
+  ```
+
+  
+
++ ts
+
+  ```typescript
+  Page({
+    data: {
+      // 页面跳转路径
+      pagePath: "",
+      // 页面标题
+      pageTitle: "",
+    },
+  
+    onLoad(options) {
+      const { pagePath, pageTitle} = options;
+      if (options && pagePath) {
+        this.setData({
+          pagePath,
+          pageTitle,
+        });
+      };
+      if (pageTitle) {
+        wx.setNavigationBarTitle({
+          title: pageTitle,
+        });
+      }
+    }
+  })
+  ```
+
++ 跳转方式
+
+  ```typescript
+  wx.navigateTo({
+      url: `/components/webView/webView?pageTitle=${pageTitle}&pagePath=${pagePath}`,
+  });
+  ```
+
+  
+
+
+
+#### 2、轮播图实现
+
++ json文件
+
+  ```json
+  {
+    "usingComponents": {
+      "van-notice-bar": "@vant/weapp/notice-bar/index"
+    }
+  }
+  ```
+
+  
+
++ wxml
+
+  ```html
+  <view class="home-container">
+    <!-- 轮播图 -->
+    <swiper class="swiper" indicator-dots="{{true}}" autoplay="{{true}}" interval="{{2000}}" duration="{{500}}">
+      <block wx:for="{{swiperList}}" wx:key="index">
+        <swiper-item class="swiper-item">
+          <image data-index="{{ index }}" bindtap="toWebview" src="{{ item.attachment.url }}"></image>
+        </swiper-item>
+      </block>
+    </swiper>
+  </view>
+  ```
+
+  
+
++ ts
+
+  ```typescript
+  import { requestSwiper } from "../../api/apis";
+  import { BASE_URL } from "../../api/request";
+  
+  interface IAttachment {
+    id: string,
+    url: string,
+    createByUserId: string,
+    createByUserName: string,
+    createByUserType: string,
+    createTime: string,
+  }
+  
+  interface ISwiper {
+    id: string,
+    type: string,
+    attachmentId: string,
+    title: string,
+    subTitle: string,
+    detail: string,
+    link: string,
+    createTime: string
+    attachment: IAttachment
+  }
+  
+  
+  interface IHomeData {
+    swiperList: Array<ISwiper>,
+  }
+  
+  Page({
+    data: {
+      swiperList: [],
+    } as IHomeData,
+  
+    onLoad() {
+      this.getSwiper();
+    },
+  
+    getSwiper() {
+      requestSwiper().then(res => {
+        const list = res.data.map((item: ISwiper) => {
+          item.attachment.url = BASE_URL + item.attachment.url;
+          return item;
+        })
+        this.setData({
+          swiperList: list,
+        })
+      });
+    },
+  
+    toWebview(e: any) {
+      const index = e.target.dataset.index;
+      const pageTitle = this.data.swiperList[index].title;
+      const pagePath = this.data.swiperList[index].link;
+      wx.navigateTo({
+        url: `/components/webView/webView?pageTitle=${pageTitle}&pagePath=${pagePath}`,
+      });
+    },
+  })
+  ```
+
+  
+
++ less
+
+  ```less
+  .home-container {
+    width: 100vw;
+    height: 100vh;
+    background-color: #f3f4f4;
+  
+    .swiper {
+      width: 750rpx;
+      height: 280rpx;
+  
+      .swiper-item,
+      image {
+        width: 100%;
+        height: 100%;
+      }
+    }
+  }
+  ```
+
+#### 3、通知公告实现
+
++ wxml
+
+  ```html
+   <view class="padding-style">
+      <!-- 通知公告 -->
+      <view class="notice">
+        <view class="title">通知公告</view>
+        <van-notice-bar wx:for="{{ noticeList }}" data-index="{{ index }}"  wx:key="index"  bindtap="toNoticeDetail" left-icon="volume-o" text="{{ item.subTitle}}" />
+      </view>
+    </view>
+  ```
+
+  
+
++ ts
+
+  ```typescript
+  import { requestNotice } from "../../api/apis";
+  import { BASE_URL } from "../../api/request";
+  
+  interface IHomeData {
+    noticeList: Array<INotice>,
+  }
+  
+  Page({
+    data: {
+      noticeList: [],
+    } as IHomeData,
+  
+    onLoad() {
+      this.getNotice();
+    },
+  
+    getNotice() {
+      requestNotice().then(res => {
+        this.setData({
+          noticeList: res.data.slice(0, 2),
+        })
+      });
+    },
+  
+    toNoticeDetail(e: any) {
+      const index = e.target.dataset.index;
+      const { noticeList } = this.data;
+      const title = noticeList[index].title;
+      const subTitle = noticeList[index].subTitle;
+      const detail = noticeList[index].detail;
+      wx.navigateTo({
+        url: `/pages/home/pages/notice_detail?title=${title}&subTitle=${subTitle}&detail=${detail}`,
+      });
+    }
+  })
+  ```
+
+  
+
++ less
+
+  ```less
+  .padding-style {
+      padding: 0 20rpx;
+  
+      .notice {
+        box-sizing: border-box;
+        border-radius: 8rpx;
+        margin-top: 30rpx;
+        background-color: #fff;
+        padding: 10rpx 20rpx;
+  
+        .title{
+          font-size: 32rpx;
+          font-weight: bold;
+          color: #222222;
+          text-align: left;
+          margin: 30rpx 0;
+        }
+        .van-notice-bar{
+          margin-bottom: 20rpx;
+        }
+      }
+    }
+  ```
+
+  
+
++ 通知公告详情界面
+
+  在`app.json` 文件中进行界面注册
+
+  ```json
+  {
+    "pages": [
+    	// ...
+      "pages/home/pages/notice_detail"
+    ],
+    // ...
+  }
+  ```
+
+  
+
+  
+
+  ```html
+  <view class="notice-detail-page">
+    <view class="sub-title">{{ subTitle}}</view>
+    <view class="detail">{{ detail}}</view>
+  </view>
+  ```
+
+  
+
+  ```typescript
+  interface INoticeDetail {
+    title: string,
+    subTitle: string,
+    detail: string,
+  }
+  
+  Page({
+    data: {
+      title: "",
+      subTitle: "",
+      detail: "",
+    } as INoticeDetail,
+  
+    onLoad(options: any) {
+      const { title, subTitle, detail } = options;
+      wx.setNavigationBarTitle({ title });
+      this.setData({
+        title,
+        subTitle,
+        detail,
+      })
+    }
+  })
+  ```
+
+  
