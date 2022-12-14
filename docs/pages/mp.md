@@ -1,6 +1,6 @@
 ## 小程序开发文档
 
-### 第一章、环境搭建
+### 一、环境搭建
 
 小程序官方文档：https://developers.weixin.qq.com/miniprogram/dev/framework/
 
@@ -12,7 +12,7 @@
 
 https://developers.weixin.qq.com/miniprogram/dev/devtools/download.html
 
-### 第二章、项目初始化
+### 二、项目初始化
 
 #### 1、创建项目
 
@@ -105,7 +105,67 @@ Vant 是一个轻量、可靠的移动端组件库，于 2017 年开源。官网
 
 
 
-#### 3、封装本地存储工具
+#### 3、tabbar搭建
+
+```json
+{
+  "pages": [
+    // 登录页(授权) 
+    "pages/auth/auth",
+    // 首页 
+    "pages/home/home",
+    // 回收分类 
+    "pages/category/category",
+    // 快速预约 
+    "pages/appointment/appointment",
+    // 我的 
+    "pages/profile/profile"
+  ],
+  "window": {
+    "backgroundTextStyle": "light",
+    "navigationBarBackgroundColor": "#fff",
+    "navigationBarTitleText": "网捷回收",
+    "navigationBarTextStyle": "black"
+  },
+  "tabBar": {
+    // 自定义需要改成 true
+    // 在跟目录新建一个自定义组件custom-tab-bar(名字不能错)
+    "custom": false,
+    "list": [{
+        "pagePath": "pages/home/home",
+        "text": "首页",
+        "iconPath": "/assets/images/tabbar/home.png",
+        "selectedIconPath": "/assets/images/tabbar/home-active.png"
+      },
+      {
+        "pagePath": "pages/category/category",
+        "text": "回收分类",
+        "iconPath": "/assets/images/tabbar/category.png",
+        "selectedIconPath": "/assets/images/tabbar/category-active.png"
+      },
+      {
+        "pagePath": "pages/appointment/appointment",
+        "text": "快速预约",
+        "iconPath": "/assets/images/tabbar/appointment.png",
+        "selectedIconPath": "/assets/images/tabbar/appointment-active.png"
+      },
+      {
+        "pagePath": "pages/profile/profile",
+        "text": "我的",
+        "iconPath": "/assets/images/tabbar/profile.png",
+        "selectedIconPath": "/assets/images/tabbar/profile-active.png"
+      }
+    ]
+  },
+  "sitemapLocation": "sitemap.json"
+}
+```
+
+
+
+### 三、工具类
+
+#### 1、封装本地存储工具
 
 ```typescript
 class Cache {
@@ -136,13 +196,13 @@ export default new Cache()
 
 
 
-#### 4、封装网络请求库
+#### 2、封装网络请求库
 
 ```typescript
 import Cache from "../utils/cache"
 
-// const BASE_URL: string = "http://114.55.32.234:8127";
-const BASE_URL: string = "http://127.0.0.1";
+
+const BASE_URL: string = "http://192.168.1.102";
 
 type ALLOW_METHODS = "OPTIONS" | "GET" | "HEAD" | "POST" | "PUT" | "DELETE" | "TRACE" | "CONNECT";
 type ALLOW_DATA = string | Map<String, any> | ArrayBuffer | any;
@@ -212,520 +272,129 @@ const baseRequest = (uri: string, method: ALLOW_METHODS, data?: ALLOW_DATA, load
   });
 }
 
-
 export {
-  get, post, delete_, put
+  get, post, delete_, put, BASE_URL
 }
 ```
 
 
 
-### 第三章、Tabbar搭建和实现授权
+#### 3、公共webview
 
-#### 1、Tabbar搭建
+```html
+<web-view src="{{ pagePath }}"></web-view>
+```
 
-采用官方默认 `tabBar` 配置来构建，如果不使用默认的Tabbar样式风格，也可以进行自定义。下面贴出完整`app.json` 文件内容。
-
-```json
-{
-  "pages": [
-    // 登录页(授权) 
-    "pages/auth/auth",
-    // 首页 
-    "pages/home/home",
-    // 回收分类 
-    "pages/category/category",
-    // 快速预约 
-    "pages/appointment/appointment",
-    // 我的 
-    "pages/profile/profile"
-  ],
-  "window": {
-    "backgroundTextStyle": "light",
-    "navigationBarBackgroundColor": "#fff",
-    "navigationBarTitleText": "网捷回收",
-    "navigationBarTextStyle": "black"
+```typescript
+Page({
+  data: {
+    // 页面跳转路径
+    pagePath: "",
+    // 页面标题
+    pageTitle: "",
   },
-  "tabBar": {
-    // 自定义需要改成 true
-    // 在跟目录新建一个自定义组件custom-tab-bar(名字不能错)
-    "custom": false,
-    "list": [{
-        "pagePath": "pages/home/home",
-        "text": "首页",
-        "iconPath": "/assets/images/tabbar/home.png",
-        "selectedIconPath": "/assets/images/tabbar/home-active.png"
-      },
-      {
-        "pagePath": "pages/category/category",
-        "text": "回收分类",
-        "iconPath": "/assets/images/tabbar/category.png",
-        "selectedIconPath": "/assets/images/tabbar/category-active.png"
-      },
-      {
-        "pagePath": "pages/appointment/appointment",
-        "text": "快速预约",
-        "iconPath": "/assets/images/tabbar/appointment.png",
-        "selectedIconPath": "/assets/images/tabbar/appointment-active.png"
-      },
-      {
-        "pagePath": "pages/profile/profile",
-        "text": "我的",
-        "iconPath": "/assets/images/tabbar/profile.png",
-        "selectedIconPath": "/assets/images/tabbar/profile-active.png"
-      }
-    ]
-  },
-  "sitemapLocation": "sitemap.json"
-}
+
+  onLoad(options) {
+    const { pagePath, pageTitle} = options;
+    if (options && pagePath) {
+      this.setData({
+        pagePath,
+        pageTitle,
+      });
+    };
+    if (pageTitle) {
+      wx.setNavigationBarTitle({
+        title: pageTitle,
+      });
+    }
+  }
+})
+```
+
+```typescript
+wx.navigateTo({
+    url: `/components/webView/webView?pageTitle=${pageTitle}&pagePath=${pagePath}`,
+});
 ```
 
 
 
-#### 2、授权功能
+### 四、授权功能
 
 + 实现思路：
 
   通过调用`wx.login()` 获取到code之后，携带code带后端服务器进行校验，校验成功后端会返回`openID、sessionKey、skey` 等信息，同时也会返回当前用户的ID，可以通过ID去获取用户的一些基本信息，客户端保存`openID`，之后请求是都携带上即可。
 
-
-
-+ API方法封装
-
-  ```typescript
-  import { get, post } from "./request";
-  
-  // 获取openID接口
-  export function requestOpenId(code: string) {
-    return post(`/wx/auth?code=${code}`, {}, false)
+```json
+{
+  "usingComponents": {
+    "van-loading": "@vant/weapp/loading/index",
+    "van-empty": "@vant/weapp/empty/index"
   }
-  
-  // 获用户信息接口
-  export function requestUserInfo(userId: string) {
-    return get(`/wx/users/${userId}`, {}, false)
-  }
-  ```
-
-  
-
-+ 界面使用到了 `van-loading` 和 `van-empty`组件，做一个引入。
-
-  ```json
-  {
-    "usingComponents": {
-      "van-loading": "@vant/weapp/loading/index",
-      "van-empty": "@vant/weapp/empty/index"
-    }
-  }
-  ```
-
-  
-
-+ 界面代码
-
-  ```html
-  <view class="auth-container">
-    <van-loading wx:if="{{ isloading }}" type="spinner" size="50" />
-    <van-empty bindtap="tologin" wx:else="" image="error" description="轻触重新加载" />
-  </view>
-  ```
-
-  ```less
-  .auth-container{
-    width: 100vw;
-    height: 100vh;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-  }
-  ```
-
-  
-
-+ 逻辑代码
-
-  ```typescript
-  import { requestOpenId, requestUserInfo } from "../../api/apis";
-  import Cache from "../../utils/cache";
-  
-  Page({
-    data: {
-      isLoading: false,
-    },
-    onLoad() {
-      this.tologin();
-    },
-  
-    tologin() {
-      this.setData({ isloading: true })
-      // 登录
-      wx.login({
-        success: response => {
-          console.log(response.code)
-          requestOpenId(response.code).then(res => {
-            if (res.code === 200) {
-              Cache.set("userId", res.data.id);
-              Cache.set("openId", res.data.openId);
-  
-              // 获取用户信息
-              requestUserInfo(res.data.id).then(res => {
-                console.log(res);
-              })
-  
-              // 跳到首页
-              wx.switchTab({
-                url: "/pages/home/home",
-              })
-            }
-          }, error => {
-            this.setData({ isloading: false })
-          })
-        },
-      })
-    }
-  })
-  ```
-
-  
-
-### 第四章、轮播图和通知公告
-
-#### 1、封装API
-
-```typescript
-// 获取轮播图数据接口
-export function requestSwiper() {
-  return get(`/swiper?type=31`, {}, false)
-}
-
-// 获取通知公告接口
-export function requestNotice() {
-  return get(`/notice?type=31`, {}, false)
 }
 ```
 
+```html
+<view class="auth-container">
+  <van-loading wx:if="{{ isloading }}" type="spinner" size="50" />
+  <van-empty bindtap="tologin" wx:else="" image="error" description="轻触重新加载" />
+</view>
+```
 
+```less
+.auth-container{
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+```
 
-#### 2、公共webview界面
+```typescript
+import { requestOpenId, requestSystemDict, requestUserInfo } from "../../api/apis";
+import Cache from "../../utils/cache";
 
-+ 新建一个`webview` page，并且在 `app.json` 文件中注册
+Page({
+  data: {
+    isLoading: false,
+  },
+  onLoad() {
+    this.tologin();
+  },
 
-  ```json
-  {
-    "pages": [
-    	// ...
-      "components/webView/webView"
-    ],
-    // ...
-  }
-  ```
+  tologin() {
+    this.setData({ isloading: true })
+    // 登录
+    wx.login({
+      success: response => {
+        console.log(response.code)
+        requestOpenId(response.code).then(res => {
+          if (res.code === 200) {
+            Cache.set("userId", res.data.id);
+            Cache.set("openId", res.data.openId);
 
-  
+            // 获取用户信息
+            requestUserInfo(res.data.id).then(res => {
+              Cache.set("userInfo", res.data);
+            })
 
-+ wxml
-
-  ```html
-  <web-view src="{{ pagePath }}"></web-view>
-  ```
-
-  
-
-+ ts
-
-  ```typescript
-  Page({
-    data: {
-      // 页面跳转路径
-      pagePath: "",
-      // 页面标题
-      pageTitle: "",
-    },
-  
-    onLoad(options) {
-      const { pagePath, pageTitle} = options;
-      if (options && pagePath) {
-        this.setData({
-          pagePath,
-          pageTitle,
-        });
-      };
-      if (pageTitle) {
-        wx.setNavigationBarTitle({
-          title: pageTitle,
-        });
-      }
-    }
-  })
-  ```
-
-+ 跳转方式
-
-  ```typescript
-  wx.navigateTo({
-      url: `/components/webView/webView?pageTitle=${pageTitle}&pagePath=${pagePath}`,
-  });
-  ```
-
-  
-
-
-
-#### 2、轮播图实现
-
-+ json文件
-
-  ```json
-  {
-    "usingComponents": {
-      "van-notice-bar": "@vant/weapp/notice-bar/index"
-    }
-  }
-  ```
-
-  
-
-+ wxml
-
-  ```html
-  <view class="home-container">
-    <!-- 轮播图 -->
-    <swiper class="swiper" indicator-dots="{{true}}" autoplay="{{true}}" interval="{{2000}}" duration="{{500}}">
-      <block wx:for="{{swiperList}}" wx:key="index">
-        <swiper-item class="swiper-item">
-          <image data-index="{{ index }}" bindtap="toWebview" src="{{ item.attachment.url }}"></image>
-        </swiper-item>
-      </block>
-    </swiper>
-  </view>
-  ```
-
-  
-
-+ ts
-
-  ```typescript
-  import { requestSwiper } from "../../api/apis";
-  import { BASE_URL } from "../../api/request";
-  
-  interface IAttachment {
-    id: string,
-    url: string,
-    createByUserId: string,
-    createByUserName: string,
-    createByUserType: string,
-    createTime: string,
-  }
-  
-  interface ISwiper {
-    id: string,
-    type: string,
-    attachmentId: string,
-    title: string,
-    subTitle: string,
-    detail: string,
-    link: string,
-    createTime: string
-    attachment: IAttachment
-  }
-  
-  
-  interface IHomeData {
-    swiperList: Array<ISwiper>,
-  }
-  
-  Page({
-    data: {
-      swiperList: [],
-    } as IHomeData,
-  
-    onLoad() {
-      this.getSwiper();
-    },
-  
-    getSwiper() {
-      requestSwiper().then(res => {
-        const list = res.data.map((item: ISwiper) => {
-          item.attachment.url = BASE_URL + item.attachment.url;
-          return item;
+            // 获取数据字典
+            requestSystemDict().then(res => {
+              Cache.set("systemDict", res.data);
+            })
+            
+            // 跳到首页
+            wx.switchTab({
+              url: "/pages/home/home",
+            })
+          }
+        }, _ => {
+          this.setData({ isloading: false })
         })
-        this.setData({
-          swiperList: list,
-        })
-      });
-    },
-  
-    toWebview(e: any) {
-      const index = e.target.dataset.index;
-      const pageTitle = this.data.swiperList[index].title;
-      const pagePath = this.data.swiperList[index].link;
-      wx.navigateTo({
-        url: `/components/webView/webView?pageTitle=${pageTitle}&pagePath=${pagePath}`,
-      });
-    },
-  })
-  ```
-
-  
-
-+ less
-
-  ```less
-  .home-container {
-    width: 100vw;
-    height: 100vh;
-    background-color: #f3f4f4;
-  
-    .swiper {
-      width: 750rpx;
-      height: 280rpx;
-  
-      .swiper-item,
-      image {
-        width: 100%;
-        height: 100%;
-      }
-    }
+      },
+    })
   }
-  ```
+})
+```
 
-#### 3、通知公告实现
-
-+ wxml
-
-  ```html
-   <view class="padding-style">
-      <!-- 通知公告 -->
-      <view class="notice">
-        <view class="title">通知公告</view>
-        <van-notice-bar wx:for="{{ noticeList }}" data-index="{{ index }}"  wx:key="index"  bindtap="toNoticeDetail" left-icon="volume-o" text="{{ item.subTitle}}" />
-      </view>
-    </view>
-  ```
-
-  
-
-+ ts
-
-  ```typescript
-  import { requestNotice } from "../../api/apis";
-  import { BASE_URL } from "../../api/request";
-  
-  interface IHomeData {
-    noticeList: Array<INotice>,
-  }
-  
-  Page({
-    data: {
-      noticeList: [],
-    } as IHomeData,
-  
-    onLoad() {
-      this.getNotice();
-    },
-  
-    getNotice() {
-      requestNotice().then(res => {
-        this.setData({
-          noticeList: res.data.slice(0, 2),
-        })
-      });
-    },
-  
-    toNoticeDetail(e: any) {
-      const index = e.target.dataset.index;
-      const { noticeList } = this.data;
-      const title = noticeList[index].title;
-      const subTitle = noticeList[index].subTitle;
-      const detail = noticeList[index].detail;
-      wx.navigateTo({
-        url: `/pages/home/pages/notice_detail?title=${title}&subTitle=${subTitle}&detail=${detail}`,
-      });
-    }
-  })
-  ```
-
-  
-
-+ less
-
-  ```less
-  .padding-style {
-      padding: 0 20rpx;
-  
-      .notice {
-        box-sizing: border-box;
-        border-radius: 8rpx;
-        margin-top: 30rpx;
-        background-color: #fff;
-        padding: 10rpx 20rpx;
-  
-        .title{
-          font-size: 32rpx;
-          font-weight: bold;
-          color: #222222;
-          text-align: left;
-          margin: 30rpx 0;
-        }
-        .van-notice-bar{
-          margin-bottom: 20rpx;
-        }
-      }
-    }
-  ```
-
-  
-
-+ 通知公告详情界面
-
-  在`app.json` 文件中进行界面注册
-
-  ```json
-  {
-    "pages": [
-    	// ...
-      "pages/home/pages/notice_detail"
-    ],
-    // ...
-  }
-  ```
-
-  
-
-  
-
-  ```html
-  <view class="notice-detail-page">
-    <view class="sub-title">{{ subTitle}}</view>
-    <view class="detail">{{ detail}}</view>
-  </view>
-  ```
-
-  
-
-  ```typescript
-  interface INoticeDetail {
-    title: string,
-    subTitle: string,
-    detail: string,
-  }
-  
-  Page({
-    data: {
-      title: "",
-      subTitle: "",
-      detail: "",
-    } as INoticeDetail,
-  
-    onLoad(options: any) {
-      const { title, subTitle, detail } = options;
-      wx.setNavigationBarTitle({ title });
-      this.setData({
-        title,
-        subTitle,
-        detail,
-      })
-    }
-  })
-  ```
-
-  

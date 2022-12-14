@@ -1,6 +1,6 @@
-服务端开发文档
+## 服务端开发文档
 
-### 第一章、数据库设计
+### 一、数据库设计
 
 #### 1、数据表预览
 
@@ -56,20 +56,20 @@ USE  wjhs;
 -- ----------------------------
 DROP TABLE IF EXISTS `system_dict`;
 CREATE TABLE `system_dict` (
-  `id` VARCHAR(32) NOT NULL  COMMENT '主键id',
-  `dict_code` int(3) NOT NULL COMMENT '数据类型编码',
-  `dict_name` VARCHAR(30) NOT NULL COMMENT '数据类型名称',
-  `dict_describe` VARCHAR(100) DEFAULT NULL COMMENT '描述',
-  `sort` int(5) DEFAULT '1' COMMENT '排序',
-  `create_by` VARCHAR(50) NOT NULL COMMENT '创建人',
-  `create_by_user_id` VARCHAR(32) NOT NULL COMMENT '创建人id',
-  `update_by` VARCHAR(50) DEFAULT NULL COMMENT '修改人',
-  `update_by_user_id` VARCHAR(32) DEFAULT NULL COMMENT '修改人id',
-  `is_delete`  CHAR(3) DEFAULT 15  NOT NULL COMMENT '是否删除(14:已删除、15:未删除)',
-  `create_time` DATETIME(0) DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-  `update_time` DATETIME(0) DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '修改时间',
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `idx_dict_code` (`dict_code`)
+    `id` VARCHAR(32) NOT NULL  COMMENT '主键id',
+    `dict_code` int(3) NOT NULL COMMENT '数据类型编码',
+    `dict_name` VARCHAR(30) NOT NULL COMMENT '数据类型名称',
+    `dict_describe` VARCHAR(100) DEFAULT NULL COMMENT '描述',
+    `sort` int(5) DEFAULT '1' COMMENT '排序',
+    `create_by` VARCHAR(50) NOT NULL COMMENT '创建人',
+    `create_by_user_id` VARCHAR(32) NOT NULL COMMENT '创建人id',
+    `update_by` VARCHAR(50) DEFAULT NULL COMMENT '修改人',
+    `update_by_user_id` VARCHAR(32) DEFAULT NULL COMMENT '修改人id',
+    `is_delete`  CHAR(3) DEFAULT 15  NOT NULL COMMENT '是否删除(14:已删除、15:未删除)',
+    `create_time` DATETIME(0) DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    `update_time` DATETIME(0) DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '修改时间',
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `idx_dict_code` (`dict_code`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='系统字典类型表';
 
 
@@ -78,22 +78,22 @@ CREATE TABLE `system_dict` (
 -- ----------------------------
 DROP TABLE IF EXISTS `operation_log`;
 CREATE TABLE `operation_log` (
-  `id` VARCHAR(32) NOT NULL COMMENT '主键id',
-  `business_module` VARCHAR(20) NOT NULL COMMENT '业务模块',
-  `business_type` VARCHAR(20) NOT NULL COMMENT '业务类型',
-  `business_describe` VARCHAR(30) DEFAULT NULL COMMENT '描述信息',
-  `api_method` VARCHAR(10)  NOT NULL COMMENT 'api方法',
-  `request_method` VARCHAR(10)  NOT NULL  COMMENT '请求方式',
-  `user_id` VARCHAR(32)  NOT NULL  COMMENT '操作人员id',
-  `user_name` VARCHAR(10)  NOT NULL  COMMENT '操作人员姓名',
-  `user_type` CHAR(3) NOT NULL COMMENT '用户类型(0:平台用户、1:微信用户、 2:骑手用户、 3:回收中心用户)',
-  `url` VARCHAR(30) NOT NULL COMMENT '请求url',
-  `ip` VARCHAR(32) DEFAULT NULL COMMENT '源IP地址',
-  `status` CHAR(3) NOT NULL COMMENT '操作状态(22:成功、23:失败)',
-  `is_delete`  CHAR(3) DEFAULT 15 NOT NULL COMMENT '是否删除(14:已删除、15:未删除)',
-  `error_message` VARCHAR(255) DEFAULT NULL COMMENT '错误消息',
-  `operation_time` DATETIME(0) DEFAULT NULL COMMENT '操作时间',
-  PRIMARY KEY (`id`)
+    `id` VARCHAR(32) NOT NULL COMMENT '主键id',
+    `business_module` VARCHAR(20) NOT NULL COMMENT '业务模块',
+    `business_type` VARCHAR(20) NOT NULL COMMENT '业务类型',
+    `business_describe` VARCHAR(30) DEFAULT NULL COMMENT '描述信息',
+    `api_method` VARCHAR(10)  NOT NULL COMMENT 'api方法',
+    `request_method` VARCHAR(10)  NOT NULL  COMMENT '请求方式',
+    `user_id` VARCHAR(32)  NOT NULL  COMMENT '操作人员id',
+    `user_name` VARCHAR(10)  NOT NULL  COMMENT '操作人员姓名',
+    `user_type` CHAR(3) NOT NULL COMMENT '用户类型(0:平台用户、1:微信用户、 2:骑手用户、 3:回收中心用户)',
+    `url` VARCHAR(30) NOT NULL COMMENT '请求url',
+    `ip` VARCHAR(32) DEFAULT NULL COMMENT '源IP地址',
+    `status` CHAR(3) NOT NULL COMMENT '操作状态(22:成功、23:失败)',
+    `is_delete`  CHAR(3) DEFAULT 15 NOT NULL COMMENT '是否删除(14:已删除、15:未删除)',
+    `error_message` VARCHAR(255) DEFAULT NULL COMMENT '错误消息',
+    `operation_time` DATETIME(0) DEFAULT NULL COMMENT '操作时间',
+    PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='操作日志';
 
 
@@ -102,18 +102,18 @@ CREATE TABLE `operation_log` (
 -- ----------------------------
 DROP TABLE IF EXISTS `login_log`;
 CREATE TABLE `login_log`(
-  `id` VARCHAR(32) NOT NULL  COMMENT '主键id',
-	`user_type` CHAR(3) NOT NULL COMMENT '用户类型(0:平台用户、1:微信用户、 2:骑手用户、 3:回收中心用户)',
-  `user_id` VARCHAR(32) NOT NULL COMMENT '用户id',
-  `token` VARCHAR(100) NOT NULL COMMENT '登录凭证',
-  `user_name` VARCHAR(10) NOT NULL COMMENT '用户名称',
-  `login_ip` VARCHAR(128) DEFAULT NULL COMMENT '登录IP',
-  `login_time` DATETIME(0) DEFAULT NULL COMMENT '登录时间',
-  `login_location` VARCHAR(50) DEFAULT NULL COMMENT '用户登录地址',
-  `is_delete` CHAR(3) DEFAULT 15 NOT NULL COMMENT '是否删除(14:已删除、15:未删除)',
-  `browser` VARCHAR(50)  NULL DEFAULT '' COMMENT '浏览器类型',
-	`system_os` VARCHAR(50)  NULL DEFAULT '' COMMENT '操作系统',
-  PRIMARY KEY (`id`)
+    `id` VARCHAR(32) NOT NULL  COMMENT '主键id',
+    `user_type` CHAR(3) NOT NULL COMMENT '用户类型(0:平台用户、1:微信用户、 2:骑手用户、 3:回收中心用户)',
+    `user_id` VARCHAR(32) NOT NULL COMMENT '用户id',
+    `token` VARCHAR(100) NOT NULL COMMENT '登录凭证',
+    `user_name` VARCHAR(10) NOT NULL COMMENT '用户名称',
+    `login_ip` VARCHAR(128) DEFAULT NULL COMMENT '登录IP',
+    `login_time` DATETIME(0) DEFAULT NULL COMMENT '登录时间',
+    `login_location` VARCHAR(50) DEFAULT NULL COMMENT '用户登录地址',
+    `is_delete` CHAR(3) DEFAULT 15 NOT NULL COMMENT '是否删除(14:已删除、15:未删除)',
+    `browser` VARCHAR(50)  NULL DEFAULT '' COMMENT '浏览器类型',
+    `system_os` VARCHAR(50)  NULL DEFAULT '' COMMENT '操作系统',
+    PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT= '用户登录表';
 
 
@@ -122,21 +122,21 @@ CREATE TABLE `login_log`(
 -- ----------------------------
 DROP TABLE IF EXISTS `wx_user`;
 CREATE TABLE `wx_user`  (
-  `id` VARCHAR(32) NOT NULL  COMMENT '主键id',
-  `open_id` VARCHAR(100) NOT NULL COMMENT 'open_id',
-  `skey` VARCHAR(100) NOT NULL COMMENT 'skey',
-  `session_key` VARCHAR(100) NOT NULL COMMENT 'session_key',
-	`gender` CHAR(3) DEFAULT NULL COMMENT '性别(20:男、21:女)',  
-	`avatar_url` VARCHAR(255) DEFAULT NULL COMMENT '头像',
-  `city` VARCHAR(255) DEFAULT NULL COMMENT '市',
-  `province` VARCHAR(255) DEFAULT NULL COMMENT '省',
-  `country` VARCHAR(255) DEFAULT NULL COMMENT '国',
-  `nick_name` VARCHAR(255) DEFAULT NULL COMMENT '昵称',
-  `is_delete`  CHAR(3) DEFAULT 15 NOT NULL COMMENT '是否删除(14:已删除、15:未删除)',
-  `last_visit_time` DATETIME(0) DEFAULT NULL COMMENT '最后登录时间',  
-  `create_time` DATETIME(0) DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-  `update_time` DATETIME(0) DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '修改时间',
-  PRIMARY KEY (`id`)
+    `id` VARCHAR(32) NOT NULL  COMMENT '主键id',
+    `open_id` VARCHAR(100) NOT NULL COMMENT 'open_id',
+    `skey` VARCHAR(100) NOT NULL COMMENT 'skey',
+    `session_key` VARCHAR(100) NOT NULL COMMENT 'session_key',
+    `gender` CHAR(3) DEFAULT NULL COMMENT '性别(20:男、21:女)',  
+    `avatar_url` VARCHAR(255) DEFAULT NULL COMMENT '头像',
+    `city` VARCHAR(255) DEFAULT NULL COMMENT '市',
+    `province` VARCHAR(255) DEFAULT NULL COMMENT '省',
+    `country` VARCHAR(255) DEFAULT NULL COMMENT '国',
+    `nick_name` VARCHAR(255) DEFAULT NULL COMMENT '昵称',
+    `is_delete`  CHAR(3) DEFAULT 15 NOT NULL COMMENT '是否删除(14:已删除、15:未删除)',
+    `last_visit_time` DATETIME(0) DEFAULT NULL COMMENT '最后登录时间',  
+    `create_time` DATETIME(0) DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    `update_time` DATETIME(0) DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '修改时间',
+    PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='小程序用户信息表';
 
 
@@ -145,18 +145,18 @@ CREATE TABLE `wx_user`  (
 -- ----------------------------
 DROP TABLE IF EXISTS `adress`;
 CREATE TABLE `adress`  (
-	`id` VARCHAR(32) NOT NULL  COMMENT '主键id',
-  `base_addrerss` VARCHAR(50) NOT NULL COMMENT '基本地址(省市区地址)',
-  `detail_address` VARCHAR(150) NOT NULL COMMENT '详细地址',
-  `phone` VARCHAR(11) NOT NULL COMMENT '收件人手机号',
-  `user_name` VARCHAR(10) NOT NULL COMMENT '收件人姓名',
-  `longitude` VARCHAR(20) NOT NULL COMMENT '经度',
-  `latitude` VARCHAR(20) NOT NULL COMMENT '纬度',
-  `is_DEFAULT` CHAR(3) DEFAULT 19 NOT NULL COMMENT '是否是默认地址(18:默认地址、19:非默认地址)',
-  `is_delete`  CHAR(3) DEFAULT 15 COMMENT '是否删除(14:已删除、15:未删除)',
-  `create_time` DATETIME(0) DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-  `update_time` DATETIME(0) DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '修改时间',
-  PRIMARY KEY (`id`)
+    `id` VARCHAR(32) NOT NULL  COMMENT '主键id',
+    `base_addrerss` VARCHAR(50) NOT NULL COMMENT '基本地址(省市区地址)',
+    `detail_address` VARCHAR(150) NOT NULL COMMENT '详细地址',
+    `phone` VARCHAR(11) NOT NULL COMMENT '收件人手机号',
+    `user_name` VARCHAR(10) NOT NULL COMMENT '收件人姓名',
+    `longitude` VARCHAR(20) NOT NULL COMMENT '经度',
+    `latitude` VARCHAR(20) NOT NULL COMMENT '纬度',
+    `is_DEFAULT` CHAR(3) DEFAULT 19 NOT NULL COMMENT '是否是默认地址(18:默认地址、19:非默认地址)',
+    `is_delete`  CHAR(3) DEFAULT 15 COMMENT '是否删除(14:已删除、15:未删除)',
+    `create_time` DATETIME(0) DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    `update_time` DATETIME(0) DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '修改时间',
+    PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='小程序用户地址信息表';
 
 
@@ -165,13 +165,13 @@ CREATE TABLE `adress`  (
 -- ----------------------------
 DROP TABLE IF EXISTS `wx_user_address_rel`;
 CREATE TABLE `wx_user_address_rel`  (
-	`id` VARCHAR(32) NOT NULL  COMMENT '主键id',
-	`user_id` VARCHAR(32) NOT NULL COMMENT '用户id',
-	`address_id` VARCHAR(32) NOT NULL COMMENT '地址id',
-	FOREIGN KEY(`user_id`) REFERENCES wx_user(`id`),
-	FOREIGN KEY (`address_id`) REFERENCES adress(`id`),
-  UNIQUE (`user_id` ,`address_id`),
-  PRIMARY KEY (`id`)
+    `id` VARCHAR(32) NOT NULL  COMMENT '主键id',
+    `user_id` VARCHAR(32) NOT NULL COMMENT '用户id',
+    `address_id` VARCHAR(32) NOT NULL COMMENT '地址id',
+    FOREIGN KEY(`user_id`) REFERENCES wx_user(`id`),
+    FOREIGN KEY (`address_id`) REFERENCES adress(`id`),
+    UNIQUE (`user_id` ,`address_id`),
+    PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='小程序用户信息和地址信息关联表';
 
 
@@ -180,19 +180,19 @@ CREATE TABLE `wx_user_address_rel`  (
 -- ----------------------------
 DROP TABLE IF EXISTS `user`;
 CREATE TABLE `user`  (
-  `id` VARCHAR(32) NOT NULL  COMMENT '主键id',
-	`username` VARCHAR(32) NOT NULL COMMENT '用户名称',
-	`password` VARCHAR(255) NOT NULL COMMENT '用户密码',
-  `user_type` CHAR(3) NOT NULL COMMENT '用户类型(0:平台用户、1:微信用户、 2:骑手用户、 3:回收中心用户)',
-	`gender` CHAR(3) DEFAULT NULL COMMENT '性别(20:男、21:女)',  
-	`attachment_id` VARCHAR(32) DEFAULT NULL COMMENT '附件id(头像)',
-  `nick_name` VARCHAR(255) DEFAULT NULL COMMENT '昵称',
-  `phone` VARCHAR(11) NOT NULL COMMENT '手机号',
-  `is_delete`  CHAR(3) DEFAULT 15 NOT NULL COMMENT '是否删除(14:已删除、15:未删除)',
-  `last_visit_time` DATETIME(0) DEFAULT NULL COMMENT '最后登录时间',  
-  `create_time` DATETIME(0) DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-  `update_time` DATETIME(0) DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '修改时间',
-  PRIMARY KEY (`id`)
+    `id` VARCHAR(32) NOT NULL  COMMENT '主键id',
+    `username` VARCHAR(32) NOT NULL COMMENT '用户名称',
+    `password` VARCHAR(255) NOT NULL COMMENT '用户密码',
+    `user_type` CHAR(3) NOT NULL COMMENT '用户类型(0:平台用户、1:微信用户、 2:骑手用户、 3:回收中心用户)',
+    `gender` CHAR(3) DEFAULT NULL COMMENT '性别(20:男、21:女)',  
+    `attachment_id` VARCHAR(32) DEFAULT NULL COMMENT '附件id(头像)',
+    `nick_name` VARCHAR(255) DEFAULT NULL COMMENT '昵称',
+    `phone` VARCHAR(11) NOT NULL COMMENT '手机号',
+    `is_delete`  CHAR(3) DEFAULT 15 NOT NULL COMMENT '是否删除(14:已删除、15:未删除)',
+    `last_visit_time` DATETIME(0) DEFAULT NULL COMMENT '最后登录时间',  
+    `create_time` DATETIME(0) DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    `update_time` DATETIME(0) DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '修改时间',
+    PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='骑手/回收中心用户/平台用户表';
 
 
@@ -200,14 +200,14 @@ CREATE TABLE `user`  (
 -- 创建 角色表
 -- ----------------------------`
 CREATE TABLE `role` (
-  `id` VARCHAR(32) NOT NULL COMMENT '角色id',
-  `role_name` varchar(20) NOT NULL DEFAULT '' COMMENT '角色名称',
-  `role_code` varchar(40) DEFAULT NULL COMMENT '角色编码',
-  `description` varchar(255) DEFAULT NULL COMMENT '描述',
-  `is_delete`  CHAR(3) DEFAULT 15 NOT NULL COMMENT '是否删除(14:已删除、15:未删除)',
-  `create_time` timestamp(0) NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-  `update_time` timestamp(0) NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
-  PRIMARY KEY (`id`)
+    `id` VARCHAR(32) NOT NULL COMMENT '角色id',
+    `role_name` varchar(20) NOT NULL DEFAULT '' COMMENT '角色名称',
+    `role_code` varchar(40) DEFAULT NULL COMMENT '角色编码',
+    `description` varchar(255) DEFAULT NULL COMMENT '描述',
+    `is_delete`  CHAR(3) DEFAULT 15 NOT NULL COMMENT '是否删除(14:已删除、15:未删除)',
+    `create_time` timestamp(0) NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    `update_time` timestamp(0) NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    PRIMARY KEY (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8 COMMENT='角色表';
 
 
@@ -216,13 +216,13 @@ CREATE TABLE `role` (
 -- ----------------------------
 DROP TABLE IF EXISTS `user_role`;
 create table `user_role`(
-  `id` VARCHAR(32) COMMENT '主键id',
-  `user_id` VARCHAR(32) COMMENT '用户id',
-  `role_id` VARCHAR(32) COMMENT '角色id',
-  `is_delete`  CHAR(3) DEFAULT 15 NOT NULL COMMENT '是否删除(14:已删除、15:未删除)',
-  `create_time` timestamp(0) NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-  `update_time` timestamp(0) NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
-  PRIMARY KEY (`id`)
+    `id` VARCHAR(32) COMMENT '主键id',
+    `user_id` VARCHAR(32) COMMENT '用户id',
+    `role_id` VARCHAR(32) COMMENT '角色id',
+    `is_delete`  CHAR(3) DEFAULT 15 NOT NULL COMMENT '是否删除(14:已删除、15:未删除)',
+    `create_time` timestamp(0) NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    `update_time` timestamp(0) NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='用户角色关联表';
 
 
@@ -230,32 +230,32 @@ create table `user_role`(
 -- 创建 权限表
 -- ----------------------------
 CREATE TABLE `menu` (
-  `id` VARCHAR(32) NOT NULL COMMENT '编号',
-  `parent_id` VARCHAR(32) NOT NULL DEFAULT '0' COMMENT '所属上级',
-  `name` varchar(20) NOT NULL DEFAULT '' COMMENT '名称',
-  `type` tinyint(3) NOT NULL DEFAULT '0' COMMENT '类型(28:目录, 29:菜单,30:按钮)',
-  `path` varchar(100) DEFAULT NULL COMMENT '路由地址',
-  `component` varchar(100) DEFAULT NULL COMMENT '组件路径',
-  `perms` varchar(100) DEFAULT NULL COMMENT '权限标识',
-  `icon` varchar(100) DEFAULT NULL COMMENT '图标',
-  `sort_value` int(11) DEFAULT NULL COMMENT '排序',
-  `is_delete`  CHAR(3) DEFAULT 15 NOT NULL COMMENT '是否删除(14:已删除、15:未删除)',
-  `create_time` timestamp(0) NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-  `update_time` timestamp(0) NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
-  PRIMARY KEY (`id`)
+    `id` VARCHAR(32) NOT NULL COMMENT '编号',
+    `parent_id` VARCHAR(32) NOT NULL DEFAULT '0' COMMENT '所属上级',
+    `name` varchar(20) NOT NULL DEFAULT '' COMMENT '名称',
+    `type` tinyint(3) NOT NULL DEFAULT '0' COMMENT '类型(28:目录, 29:菜单,30:按钮)',
+    `path` varchar(100) DEFAULT NULL COMMENT '路由地址',
+    `component` varchar(100) DEFAULT NULL COMMENT '组件路径',
+    `perms` varchar(100) DEFAULT NULL COMMENT '权限标识',
+    `icon` varchar(100) DEFAULT NULL COMMENT '图标',
+    `sort_value` int(11) DEFAULT NULL COMMENT '排序',
+    `is_delete`  CHAR(3) DEFAULT 15 NOT NULL COMMENT '是否删除(14:已删除、15:未删除)',
+    `create_time` timestamp(0) NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    `update_time` timestamp(0) NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    PRIMARY KEY (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=35 DEFAULT CHARSET=utf8mb4 COMMENT='权限表';
 
 -- ----------------------------
 -- 创建 角色权限关联表
 -- ----------------------------
 CREATE TABLE `role_menu` (
-  `id` VARCHAR(32) NOT NULL,
-  `role_id` VARCHAR(32) NOT NULL DEFAULT '0',
-  `menu_id` VARCHAR(32) NOT NULL DEFAULT '0',
-  `is_delete`  CHAR(3) DEFAULT 15 NOT NULL COMMENT '是否删除(14:已删除、15:未删除)',
-  `create_time` timestamp(0) NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-  `update_time` timestamp(0) NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
-  PRIMARY KEY (`id`)
+    `id` VARCHAR(32) NOT NULL,
+    `role_id` VARCHAR(32) NOT NULL DEFAULT '0',
+    `menu_id` VARCHAR(32) NOT NULL DEFAULT '0',
+    `is_delete`  CHAR(3) DEFAULT 15 NOT NULL COMMENT '是否删除(14:已删除、15:未删除)',
+    `create_time` timestamp(0) NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    `update_time` timestamp(0) NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    PRIMARY KEY (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=33 DEFAULT CHARSET=utf8 COMMENT='角色权限关联表';
 
 
@@ -264,15 +264,15 @@ CREATE TABLE `role_menu` (
 -- ----------------------------
 DROP TABLE IF EXISTS `attachment`;
 CREATE TABLE `attachment` (
-  `id` VARCHAR(32) NOT NULL  COMMENT '主键id',
-  `url` VARCHAR(100) NOT NULL COMMENT '访问地址',
-  `create_by_user_id` VARCHAR(32) NOT NULL COMMENT '创建人id',
-  `create_by_user_name` VARCHAR(10) NOT NULL COMMENT '创建人name',
-  `create_by_user_type` CHAR(3) NOT NULL COMMENT '用户类型(0:平台用户、1:微信用户、 2:骑手用户、 3:回收中心用户)',
-  `is_delete`  CHAR(3) DEFAULT 15 NOT NULL COMMENT '是否删除(14:已删除、15:未删除)',
-  `create_time` DATETIME(0) DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-  `update_time` DATETIME(0) DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '修改时间',
-  PRIMARY KEY (`id`)
+    `id` VARCHAR(32) NOT NULL  COMMENT '主键id',
+    `url` VARCHAR(100) NOT NULL COMMENT '访问地址',
+    `create_by_user_id` VARCHAR(32) NOT NULL COMMENT '创建人id',
+    `create_by_user_name` VARCHAR(10) NOT NULL COMMENT '创建人name',
+    `create_by_user_type` CHAR(3) NOT NULL COMMENT '用户类型(0:平台用户、1:微信用户、 2:骑手用户、 3:回收中心用户)',
+    `is_delete`  CHAR(3) DEFAULT 15 NOT NULL COMMENT '是否删除(14:已删除、15:未删除)',
+    `create_time` DATETIME(0) DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    `update_time` DATETIME(0) DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '修改时间',
+    PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COMMENT='系统附件表';
 
 
@@ -281,17 +281,17 @@ CREATE TABLE `attachment` (
 -- ----------------------------
 DROP TABLE IF EXISTS `swiper`;
 CREATE TABLE `swiper`  (
-	`id` VARCHAR(32) NOT NULL  COMMENT '主键id',
-	`type` VARCHAR(100) DEFAULT NULL COMMENT '类型',
-	`attachment_id` VARCHAR(32) NOT NULL COMMENT '附件id',
-	`title` VARCHAR(30) DEFAULT NULL COMMENT '标题',
-	`sub_title` VARCHAR(100) DEFAULT NULL COMMENT '子标题',
-	`detail` VARCHAR(100) DEFAULT NULL COMMENT '详细信息',
-	`link` VARCHAR(100) DEFAULT NULL COMMENT '跳转链接',
-  `is_delete`  CHAR(3) DEFAULT 15 NOT NULL COMMENT '是否删除(14:已删除、15:未删除)',
-  `create_time` DATETIME(0) DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-  `update_time` DATETIME(0) DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '修改时间',
-  PRIMARY KEY (`id`)
+    `id` VARCHAR(32) NOT NULL  COMMENT '主键id',
+    `type` VARCHAR(100) DEFAULT NULL COMMENT '类型',
+    `attachment_id` VARCHAR(32) NOT NULL COMMENT '附件id',
+    `title` VARCHAR(30) DEFAULT NULL COMMENT '标题',
+    `sub_title` VARCHAR(100) DEFAULT NULL COMMENT '子标题',
+    `detail` VARCHAR(100) DEFAULT NULL COMMENT '详细信息',
+    `link` VARCHAR(100) DEFAULT NULL COMMENT '跳转链接',
+    `is_delete`  CHAR(3) DEFAULT 15 NOT NULL COMMENT '是否删除(14:已删除、15:未删除)',
+    `create_time` DATETIME(0) DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    `update_time` DATETIME(0) DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '修改时间',
+    PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='轮播图表';
 
 
@@ -300,16 +300,16 @@ CREATE TABLE `swiper`  (
 -- ----------------------------
 DROP TABLE IF EXISTS `notice`;
 CREATE TABLE `notice`  (
-	`id` VARCHAR(32) NOT NULL COMMENT '主键id',
-	`type` VARCHAR(100) DEFAULT NULL COMMENT '类型',
-	`title` VARCHAR(30) NOT NULL COMMENT '标题',
-	`sub_title` VARCHAR(100) DEFAULT NULL COMMENT '子标题',
-	`detail` VARCHAR(100) DEFAULT NULL COMMENT '详细信息',
-	`link` VARCHAR(100) DEFAULT NULL COMMENT '跳转链接',
-  `is_delete`  CHAR(3) DEFAULT 15 NOT NULL COMMENT '是否删除(14:已删除、15:未删除)',
-  `create_time` DATETIME(0) DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-  `update_time` DATETIME(0) DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '修改时间',
-  PRIMARY KEY (`id`)
+    `id` VARCHAR(32) NOT NULL COMMENT '主键id',
+    `type` VARCHAR(100) DEFAULT NULL COMMENT '类型',
+    `title` VARCHAR(30) NOT NULL COMMENT '标题',
+    `sub_title` VARCHAR(100) DEFAULT NULL COMMENT '子标题',
+    `detail` VARCHAR(100) DEFAULT NULL COMMENT '详细信息',
+    `link` VARCHAR(100) DEFAULT NULL COMMENT '跳转链接',
+    `is_delete`  CHAR(3) DEFAULT 15 NOT NULL COMMENT '是否删除(14:已删除、15:未删除)',
+    `create_time` DATETIME(0) DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    `update_time` DATETIME(0) DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '修改时间',
+    PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='公告栏表';
 
 
@@ -318,13 +318,13 @@ CREATE TABLE `notice`  (
 -- ----------------------------
 DROP TABLE IF EXISTS `recycle_goods_type`;
 CREATE TABLE `recycle_goods_type`  (
-	`id` VARCHAR(32) NOT NULL  COMMENT '主键id',
-	`name` VARCHAR(30) NOT NULL COMMENT '类别名称',
-	`describe` VARCHAR(100) DEFAULT NULL COMMENT '类别描述',
-  `is_delete`  CHAR(3) DEFAULT 15 NOT NULL COMMENT '是否删除(14:已删除、15:未删除)',
-  `create_time` DATETIME(0) DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-  `update_time` DATETIME(0) DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '修改时间',
-  PRIMARY KEY (`id`)
+    `id` VARCHAR(32) NOT NULL  COMMENT '主键id',
+    `name` VARCHAR(30) NOT NULL COMMENT '类别名称',
+    `describe` VARCHAR(100) DEFAULT NULL COMMENT '类别描述',
+    `is_delete`  CHAR(3) DEFAULT 15 NOT NULL COMMENT '是否删除(14:已删除、15:未删除)',
+    `create_time` DATETIME(0) DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    `update_time` DATETIME(0) DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '修改时间',
+    PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='回收商品分类表';
 
 
@@ -333,19 +333,19 @@ CREATE TABLE `recycle_goods_type`  (
 -- ----------------------------
 DROP TABLE IF EXISTS `recycle_goods`;
 CREATE TABLE `recycle_goods`  (
-	`id` VARCHAR(32) NOT NULL  COMMENT '主键id',
-	`type_id` VARCHAR(32) NOT NULL COMMENT '类别id',
-	`name` VARCHAR(30) NOT NULL COMMENT '商品名称',
-	`describe` VARCHAR(100) DEFAULT NULL COMMENT '商品描述',
-	`integral` double(7,2) NOT NULL COMMENT '商品可兑换积分',
-	`attachment_id` VARCHAR(32) NOT NULL COMMENT '附件id',
-	`user_price` double(7,2) NOT NULL COMMENT '用户价格',
-	`driver_price` double(7,2) NOT NULL COMMENT '骑手价格',
-	`recycle_center__price` double(7,2) NOT NULL COMMENT '回收中心用户价格',
-  `is_delete`  CHAR(3) DEFAULT 15 NOT NULL COMMENT '是否删除(14:已删除、15:未删除)',
-  `create_time` DATETIME(0) DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-  `update_time` DATETIME(0) DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '修改时间',
-  PRIMARY KEY (`id`)
+    `id` VARCHAR(32) NOT NULL  COMMENT '主键id',
+    `type_id` VARCHAR(32) NOT NULL COMMENT '类别id',
+    `name` VARCHAR(30) NOT NULL COMMENT '商品名称',
+    `describe` VARCHAR(100) DEFAULT NULL COMMENT '商品描述',
+    `integral` double(7,2) NOT NULL COMMENT '商品可兑换积分',
+    `attachment_id` VARCHAR(32) NOT NULL COMMENT '附件id',
+    `user_price` double(7,2) NOT NULL COMMENT '用户价格',
+    `driver_price` double(7,2) NOT NULL COMMENT '骑手价格',
+    `recycle_center__price` double(7,2) NOT NULL COMMENT '回收中心用户价格',
+    `is_delete`  CHAR(3) DEFAULT 15 NOT NULL COMMENT '是否删除(14:已删除、15:未删除)',
+    `create_time` DATETIME(0) DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    `update_time` DATETIME(0) DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '修改时间',
+    PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='回收商品表';
 
 
@@ -354,17 +354,17 @@ CREATE TABLE `recycle_goods`  (
 -- ----------------------------
 DROP TABLE IF EXISTS `recycle_order`;
 CREATE TABLE `recycle_order`  (
-	`id` VARCHAR(32) NOT NULL  COMMENT '主键id',
-  `submit_user_id` VARCHAR(32) NOT NULL COMMENT '下单用户id',
-  `receive_user_id` VARCHAR(32) NOT NULL COMMENT '接单用户id',
-  `order_type` CHAR(3) NOT NULL COMMENT '订单类别(10:用户到骑手, 11:骑手到回收中心用户)',
-  `status` CHAR(3) NOT NULL COMMENT '订单类别(4:待接单, 5:待上门, 6:待结算, 7:已完结, 8:待已超时, 9:取消订单)',
-  `trading_money` double(7,2) NOT NULL COMMENT '交易金额',
-  `note` VARCHAR(255) DEFAULT NULL COMMENT '下单备注',
-  `is_delete`  CHAR(3) DEFAULT 15  NOT NULL COMMENT '是否删除(14:已删除、15:未删除)',
-  `create_time` DATETIME(0) DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-  `update_time` DATETIME(0) DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '修改时间',
-  PRIMARY KEY (`id`)
+    `id` VARCHAR(32) NOT NULL  COMMENT '主键id',
+    `submit_user_id` VARCHAR(32) NOT NULL COMMENT '下单用户id',
+    `receive_user_id` VARCHAR(32) NOT NULL COMMENT '接单用户id',
+    `order_type` CHAR(3) NOT NULL COMMENT '订单类别(10:用户到骑手, 11:骑手到回收中心用户)',
+    `status` CHAR(3) NOT NULL COMMENT '订单类别(4:待接单, 5:待上门, 6:待结算, 7:已完结, 8:待已超时, 9:取消订单)',
+    `trading_money` double(7,2) NOT NULL COMMENT '交易金额',
+    `note` VARCHAR(255) DEFAULT NULL COMMENT '下单备注',
+    `is_delete`  CHAR(3) DEFAULT 15  NOT NULL COMMENT '是否删除(14:已删除、15:未删除)',
+    `create_time` DATETIME(0) DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    `update_time` DATETIME(0) DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '修改时间',
+    PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='回收商品订单表';
 
 
@@ -373,14 +373,14 @@ CREATE TABLE `recycle_order`  (
 -- ----------------------------
 DROP TABLE IF EXISTS `recycle_order_detail`;
 CREATE TABLE `recycle_order_detail`(
-	`id` VARCHAR(32) NOT NULL  COMMENT '主键id',
-	`order_id` VARCHAR(32) NOT NULL COMMENT '订单id',
-  `goods_id` VARCHAR(32) NOT NULL COMMENT '商品id',
-  `weight` double(7,2)  NOT NULL COMMENT '商品重量(KG)',
-  `is_delete`  CHAR(3) DEFAULT 15 NOT NULL COMMENT '是否删除(14:已删除、15:未删除)',
-  `create_time` DATETIME(0) DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-  `update_time` DATETIME(0) DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '修改时间',
-  PRIMARY KEY (`id`)
+    `id` VARCHAR(32) NOT NULL  COMMENT '主键id',
+    `order_id` VARCHAR(32) NOT NULL COMMENT '订单id',
+    `goods_id` VARCHAR(32) NOT NULL COMMENT '商品id',
+    `weight` double(7,2)  NOT NULL COMMENT '商品重量(KG)',
+    `is_delete`  CHAR(3) DEFAULT 15 NOT NULL COMMENT '是否删除(14:已删除、15:未删除)',
+    `create_time` DATETIME(0) DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    `update_time` DATETIME(0) DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '修改时间',
+    PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='回收商品订单详情表';
 
 
@@ -389,13 +389,13 @@ CREATE TABLE `recycle_order_detail`(
 -- ----------------------------
 DROP TABLE IF EXISTS `integral_goods_type`;
 CREATE TABLE `integral_goods_type`  (
-	`id` VARCHAR(32) NOT NULL  COMMENT '主键id',
-	`name` VARCHAR(30) NOT NULL COMMENT '类别名称',
-	`describe` VARCHAR(100) DEFAULT NULL COMMENT '类别描述',
-  `is_delete`  CHAR(3) DEFAULT 15  NOT NULL COMMENT '是否删除(14:已删除、15:未删除)',
-  `create_time` DATETIME(0) DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-  `update_time` DATETIME(0) DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '修改时间',
-  PRIMARY KEY (`id`)
+    `id` VARCHAR(32) NOT NULL  COMMENT '主键id',
+    `name` VARCHAR(30) NOT NULL COMMENT '类别名称',
+    `describe` VARCHAR(100) DEFAULT NULL COMMENT '类别描述',
+    `is_delete`  CHAR(3) DEFAULT 15  NOT NULL COMMENT '是否删除(14:已删除、15:未删除)',
+    `create_time` DATETIME(0) DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    `update_time` DATETIME(0) DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '修改时间',
+    PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='积分商品分类表';
 
 
@@ -404,17 +404,17 @@ CREATE TABLE `integral_goods_type`  (
 -- ----------------------------
 DROP TABLE IF EXISTS `integral_goods`;
 CREATE TABLE `integral_goods`  (
-	`id` VARCHAR(32) NOT NULL  COMMENT '主键id',
-	`type_id`  int(11) NOT NULL COMMENT '类别id',
-	`name` VARCHAR(30) NOT NULL COMMENT '商品名称',
-	`describe` VARCHAR(100) DEFAULT NULL COMMENT '商品描述',
-	`integral` double(7,2) NOT NULL COMMENT '兑换商品需要的积分',
-	`attachment_id` VARCHAR(32) NOT NULL COMMENT '附件id',
-  `is_delete`  CHAR(3) DEFAULT 15 NOT NULL COMMENT '是否删除(14:已删除、15:未删除)',
-  `status`  CHAR(3) DEFAULT 16 COMMENT '商品状态(16:正常、17:已下架)',
-  `create_time` DATETIME(0) DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-  `update_time` DATETIME(0) DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '修改时间',
-  PRIMARY KEY (`id`)
+    `id` VARCHAR(32) NOT NULL  COMMENT '主键id',
+    `type_id`  int(11) NOT NULL COMMENT '类别id',
+    `name` VARCHAR(30) NOT NULL COMMENT '商品名称',
+    `describe` VARCHAR(100) DEFAULT NULL COMMENT '商品描述',
+    `integral` double(7,2) NOT NULL COMMENT '兑换商品需要的积分',
+    `attachment_id` VARCHAR(32) NOT NULL COMMENT '附件id',
+    `is_delete`  CHAR(3) DEFAULT 15 NOT NULL COMMENT '是否删除(14:已删除、15:未删除)',
+    `status`  CHAR(3) DEFAULT 16 COMMENT '商品状态(16:正常、17:已下架)',
+    `create_time` DATETIME(0) DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    `update_time` DATETIME(0) DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '修改时间',
+    PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='积分商品表';
 
 
@@ -423,15 +423,15 @@ CREATE TABLE `integral_goods`  (
 -- ----------------------------
 DROP TABLE IF EXISTS `integral_order`;
 CREATE TABLE `integral_order`  (
-	`id` VARCHAR(32) NOT NULL  COMMENT '主键id',
-  `user_id` VARCHAR(32) NOT NULL COMMENT '下单用户id',
-  `status` CHAR(3) NOT NULL COMMENT '订单类别(20:待发货, 21:待收货, 22:已完成)',
-  `trading_money` double(7,2) NOT NULL COMMENT '交易金额',
-  `note` VARCHAR(255) DEFAULT NULL COMMENT '下单备注',
-  `is_delete`  CHAR(3) DEFAULT 15 NOT NULL COMMENT '是否删除(14:已删除、15:未删除)',
-  `create_time` DATETIME(0) DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-  `update_time` DATETIME(0) DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '修改时间',
-  PRIMARY KEY (`id`)
+    `id` VARCHAR(32) NOT NULL  COMMENT '主键id',
+    `user_id` VARCHAR(32) NOT NULL COMMENT '下单用户id',
+    `status` CHAR(3) NOT NULL COMMENT '订单类别(20:待发货, 21:待收货, 22:已完成)',
+    `trading_money` double(7,2) NOT NULL COMMENT '交易金额',
+    `note` VARCHAR(255) DEFAULT NULL COMMENT '下单备注',
+    `is_delete`  CHAR(3) DEFAULT 15 NOT NULL COMMENT '是否删除(14:已删除、15:未删除)',
+    `create_time` DATETIME(0) DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    `update_time` DATETIME(0) DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '修改时间',
+    PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='积分商品表订单表';
 
 
@@ -440,37 +440,34 @@ CREATE TABLE `integral_order`  (
 -- ----------------------------
 DROP TABLE IF EXISTS `account`;
 CREATE TABLE `account`  (
-	`id` VARCHAR(32) NOT NULL  COMMENT '主键id',
-	`user_type` CHAR(3) NOT NULL COMMENT '用户类型(0:平台用户、1:微信用户、 2:骑手用户、 3:回收中心用户)',
-  `user_id` VARCHAR(32) NOT NULL COMMENT '用户id',
-  `balance` double(7,2) NOT NULL COMMENT '用户余额',
-  `create_time` DATETIME(0) DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-  `update_time` DATETIME(0) DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '修改时间',
-  PRIMARY KEY (`id`)
+    `id` VARCHAR(32) NOT NULL  COMMENT '主键id',
+    `user_type` CHAR(3) NOT NULL COMMENT '用户类型(0:平台用户、1:微信用户、 2:骑手用户、 3:回收中心用户)',
+    `user_id` VARCHAR(32) NOT NULL COMMENT '用户id',
+    `balance` double(7,2) NOT NULL COMMENT '用户余额',
+    `create_time` DATETIME(0) DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    `update_time` DATETIME(0) DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '修改时间',
+    PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='账户表';
- 
+
 
 -- ----------------------------
 -- 创建 账户流水表
 -- ----------------------------
 DROP TABLE IF EXISTS `account_record`;
 CREATE TABLE `account_record`  (
-	`id` VARCHAR(32) NOT NULL  COMMENT '主键id',
-	`user_type_from` CHAR(3) NOT NULL COMMENT '支出用户类型(0:平台用户、1:微信用户、 2:骑手用户、 3:回收中心用户)',
-	`user_type_to` CHAR(3) NOT NULL COMMENT '收入用户类型(0:平台用户、1:微信用户、 2:骑手用户、 3:回收中心用户)',
-	`user_id_from` VARCHAR(32) NOT NULL COMMENT '支出用户id',
-	`user_id_to` VARCHAR(32) NOT NULL COMMENT '收入用户id',
-	`trading_id` VARCHAR(32) NULL COMMENT '交易id(订单id)',
-  `trading_money` double(7,2) NOT NULL COMMENT '交易金额',
-  `trading_type` CHAR(3) NOT NULL COMMENT '交易方式',
-  `trading_note` VARCHAR(255) DEFAULT NULL COMMENT '交易备注',
-  `create_time` DATETIME(0) DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-  `update_time` DATETIME(0) DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '修改时间',
-  PRIMARY KEY (`id`)
+    `id` VARCHAR(32) NOT NULL  COMMENT '主键id',
+    `user_type_from` CHAR(3) NOT NULL COMMENT '支出用户类型(0:平台用户、1:微信用户、 2:骑手用户、 3:回收中心用户)',
+    `user_type_to` CHAR(3) NOT NULL COMMENT '收入用户类型(0:平台用户、1:微信用户、 2:骑手用户、 3:回收中心用户)',
+    `user_id_from` VARCHAR(32) NOT NULL COMMENT '支出用户id',
+    `user_id_to` VARCHAR(32) NOT NULL COMMENT '收入用户id',
+    `trading_id` VARCHAR(32) NULL COMMENT '交易id(订单id)',
+    `trading_money` double(7,2) NOT NULL COMMENT '交易金额',
+    `trading_type` CHAR(3) NOT NULL COMMENT '交易方式',
+    `trading_note` VARCHAR(255) DEFAULT NULL COMMENT '交易备注',
+    `create_time` DATETIME(0) DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    `update_time` DATETIME(0) DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '修改时间',
+    PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='账户流水';
-
-
-
 
 ```
 
@@ -486,7 +483,6 @@ CREATE TABLE `account_record`  (
 3：回收中心用户
 
 
-
 回收订单状态(hsddzt)
 4：待接单
 5：待上门
@@ -496,11 +492,9 @@ CREATE TABLE `account_record`  (
 9：取消订单
 
 
-
 回收订单流程(hsddlc)
 10：用户到骑手
 11：骑手到回收中心
-
 
 
 用户状态(yhzt)
@@ -508,11 +502,9 @@ CREATE TABLE `account_record`  (
 13：停用
 
 
-
 数据状态(sjzt)
 14：逻辑删除(已经删除)
 15：逻辑删除(未删除)
-
 
 
 积分商品状态(jfspzt)
@@ -520,11 +512,9 @@ CREATE TABLE `account_record`  (
 17：已下架
 
 
-
 地址信息状态(dzxxzt)
 18：默认地址
 19：非默认地址
-
 
 
 性别状态(xbzt)
@@ -532,11 +522,9 @@ CREATE TABLE `account_record`  (
 21：女
 
 
-
 操作状态(czzt)
 22：成功
 23：失败
-
 
 
 交易方式(jyfs)
@@ -551,6 +539,16 @@ CREATE TABLE `account_record`  (
 28：目录
 29：菜单
 30：按钮
+
+
+终端类型(zdlx)
+31：小程序
+32：App
+
+
+商品状态(spzt)
+33：上架
+34：下架
 ```
 
 
@@ -650,40 +648,333 @@ VALUES
 
 
 
-### 第二章、项目初始化
+#### 5、数据库脚本更新
 
-#### 1、项目环境版本说明
+`V20221203.01__update_user_password.sql`
 
-+ 操作系统环境：windows11
-+ idea版本： 2021.3.1
-+ jdk版本：1.8
-+ MySQL版本：8.x
-+ SpringBoot版本：2.5.14
+```sql
+-- 更新密码
+update `user` set password = '_hSF8lwCW9Ha2zdsii0AjaOSsVwKQ28Ti3SUe144KXU=' where id = '369BCFE480454D22A07A8644F6DF0349';
 
+update `user` set password = 'qtLSKnRZzQ6j7ERhHQLLfu9Nx1WsdWe87EfQ6mABoTU=' where id = 'ADBD5F0E46474696B65140568E43385E';
 
-
-#### 2、idea初始化SpringBoot项目
-
-+ 参考的教程(2019版本idea)：https://blog.csdn.net/wangmeixi/article/details/100013298
-+ 参考的教程(2021版本idea)：https://blog.csdn.net/yxzone/article/details/118728302
+update `user` set password = 'Vm4gI_I5r6uH6FaHvT17168U_HhMxNfQCYgN1Ro6Jz23fkEPuSL_W0PkYsW1u27P=' where id = 'F2532E33786F4B8D9FA2DB00F03352FB';
+```
 
 
 
-#### 3、配置数据库环境
+`V20221204.01__update_operation_log_table_structure.sql`
 
-+ 
+```sql
+-- 更改字段长度
+alter table operation_log modify `url` VARCHAR(255) NOT NULL COMMENT '请求url';
+```
 
-+ 添加配置文件
 
-  application.yml
+
+`V20221204.02__insert_system_dict_table.sql`
+
+```sql
+-- 添加数据
+INSERT INTO
+  `wjhs`.`system_dict` (`id`, `dict_code`, `dict_name`, `dict_describe`, `sort`, `create_by`, `create_by_user_id`, `update_by`, `update_by_user_id`)
+VALUES
+  ('7B780A0BF5EB46248FB77D800AD7024D', 31, '终端类型(zdlx)', '小程序', 1 , 'admin', '369BCFE480454D22A07A8644F6DF0349', NULL, NULL),
+  ('B81A602284B44052AE1BE0D5EBBA9A2E', 32, '终端类型(zdlx)', 'App', 1 , 'admin', '369BCFE480454D22A07A8644F6DF0349', NULL, NULL);
+
+```
+
+
+
+`V20221204.03__update_swiper_and_notice_structure_table.sql`
+
+```sql
+-- 更改type字段备注说明
+alter table swiper modify `type` char(3)  NOT NULL COMMENT '类型(31:小程序端、32:App端)';
+
+-- 更改type字段备注说明
+alter table notice modify `type` char(3)  NOT NULL COMMENT '类型(31:小程序端、32:App端)';
+```
+
+
+
+`V20221209.01__update_attachment_table_structure.sql`
+
+```sql
+-- 更改字段长度
+alter table attachment modify `create_by_user_name` varchar(32) not null comment '创建人姓名';
+
+```
+
+
+
+`V20221209.02__update_operation_log_table_structure.sql`
+
+```sql
+-- 更改字段长度
+alter table operation_log modify `user_name` varchar(100) not null comment '操作人员姓名';
+alter table operation_log modify `api_method` varchar(255) not null comment 'api方法';
+alter table operation_log modify `error_message` text  not null comment '错误消息';
+
+```
+
+
+
+`V20221211.01__insert_system_dict_table.sql`
+
+```sql
+-- 添加数据
+INSERT INTO
+  `wjhs`.`system_dict` (`id`, `dict_code`, `dict_name`, `dict_describe`, `sort`, `create_by`, `create_by_user_id`, `update_by`, `update_by_user_id`)
+VALUES
+  ('6EB0678757884A29870847A2A625526D', 33, '商品状态(spzt)', '上架', 1 , 'admin', '369BCFE480454D22A07A8644F6DF0349', NULL, NULL),
+  ('FED74C098E4543BE9B1C82DA06F49985', 34, '商品状态(spzt)', '下架', 1 , 'admin', '369BCFE480454D22A07A8644F6DF0349', NULL, NULL);
+
+
+```
+
+
+
+`V20221211.02__update_recycle_goods_type_table_structure.sql.sql`
+
+```sql
+-- 添加上下架状态字段(status)
+alter table `recycle_goods_type` add `status` char(3) default 33 COMMENT '商品状态(33:上架、34:下架)' after `is_delete`;
+```
+
+
+
+`V20221211.03__update_recycle_goods_table_structure.sql.sql`
+
+```sql
+-- 添加上下架状态字段(status)
+alter table `recycle_goods` add `status` char(3) default 33  COMMENT '商品状态(33:上架、34:下架)' after `is_delete`;
+```
+
+
+
+`V20221211.04__update_recycle_goods_table_structure.sql`
+
+```sql
+-- 更改字段名称
+alter table `recycle_goods` change `recycle_center__price` `recycle_center_price` double(7,2) NOT NULL COMMENT '回收中心用户价格';
+```
+
+
+
+
+
+
+
+
+
+### 二、项目初始化
+
+#### 1、添加依赖
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>2.5.14</version>
+        <relativePath/>
+    </parent>
+
+    <groupId>com.ilovesshan.wjhs</groupId>
+    <artifactId>wjhs</artifactId>
+    <version>0.0.1</version>
+
+    <name>wjhs</name>
+    <description>wjhs</description>
+
+    <properties>
+        <java.version>1.8</java.version>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+
+        <!-- mysql 驱动 -->
+        <dependency>
+            <groupId>mysql</groupId>
+            <artifactId>mysql-connector-java</artifactId>
+        </dependency>
+
+        <!-- lombok -->
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <optional>true</optional>
+        </dependency>
+
+
+        <!-- druid -->
+        <dependency>
+            <groupId>com.alibaba</groupId>
+            <artifactId>druid-spring-boot-starter</artifactId>
+            <version>1.2.14</version>
+        </dependency>
+
+        <!-- mybatis -->
+        <dependency>
+            <groupId>org.mybatis.spring.boot</groupId>
+            <artifactId>mybatis-spring-boot-starter</artifactId>
+            <version>2.2.2</version>
+        </dependency>
+
+
+        <!-- Swagger2 -->
+        <dependency>
+            <groupId>com.github.xiaoymin</groupId>
+            <artifactId>knife4j-spring-boot-starter</artifactId>
+            <version>2.0.9</version>
+        </dependency>
+
+
+        <!-- DTO字段校验 -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-validation</artifactId>
+        </dependency>
+
+        <!-- flyway -->
+        <dependency>
+            <groupId>org.flywaydb</groupId>
+            <artifactId>flyway-core</artifactId>
+            <version>5.2.4</version>
+        </dependency>
+
+        <!-- h2 数据库 -->
+        <dependency>
+            <groupId>com.h2database</groupId>
+            <artifactId>h2</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+
+        <!-- 单元测试  -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+
+        <!-- mapstruct 实体类映射工具-->
+        <dependency>
+            <groupId>org.mapstruct</groupId>
+            <artifactId>mapstruct</artifactId>
+            <version>1.4.2.Final</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.mapstruct</groupId>
+            <artifactId>mapstruct-processor</artifactId>
+            <version>1.4.2.Final</version>
+        </dependency>
+
+
+        <!-- token -->
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt</artifactId>
+            <version>0.9.0</version>
+        </dependency>
+
+
+        <!-- Spring-Security 授权认证框架 -->
+        <!--        <dependency>-->
+        <!--            <groupId>org.springframework.boot</groupId>-->
+        <!--            <artifactId>spring-boot-starter-security</artifactId>-->
+        <!--        </dependency>-->
+
+
+        <!-- redis 缓存中间件 -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-redis</artifactId>
+        </dependency>
+
+        <!-- fastjson -->
+        <dependency>
+            <groupId>com.alibaba</groupId>
+            <artifactId>fastjson</artifactId>
+            <version>1.2.68</version>
+        </dependency>
+
+
+        <!-- HTTP协议的客户端编程工具包 -->
+        <dependency>
+            <groupId>org.apache.httpcomponents</groupId>
+            <artifactId>httpclient</artifactId>
+            <version>4.5.2</version>
+        </dependency>
+
+        <!-- 支持 切面编程 -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-aop</artifactId>
+        </dependency>
+
+    </dependencies>
+
+    <build>
+        <resources>
+            <resource>
+                <directory>src/main/java</directory>
+                <includes>
+                    <include>**/*.xml</include>
+                </includes>
+            </resource>
+            <resource>
+                <directory>src/main/resources</directory>
+            </resource>
+        </resources>
+
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+                <configuration>
+                    <excludes>
+                        <exclude>
+                            <groupId>org.projectlombok</groupId>
+                            <artifactId>lombok</artifactId>
+                        </exclude>
+                    </excludes>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>
+
+```
+
+
+
+#### 2、添加配置文件
+
++ application.yml
 
   ```yaml
   server:
-    port: 80
+    port: ${PORT}
   
   spring:
     application:
       name: wjhs
+  
+    mvc:
+      pathmatch:
+        # 配置策略(swagger文档<https://doc.xiaominfo.com/docs/quick-start>)
+        matching-strategy: ant-path-matcher
   
     profiles:
       active: dev
@@ -694,6 +985,11 @@ VALUES
         url: jdbc:mysql://${MYSQL_ADDRESS}/${MYSQL_DATABASE}?serverTimezone=Asia/Shanghai&allowMultiQueries=true&useUnicode=true&characterEncoding=UTF-8&useSSL=false
         username: ${MYSQL_USER_NAME}
         password: ${MySQL_PASSWORD}
+  
+    # redis 配置
+    redis:
+      port: ${REDIS_PORT}
+      host: ${REDIS_HOST}
   
     flyway:
       # 是否启用flyway
@@ -712,6 +1008,37 @@ VALUES
       validate-on-migrate: true
       # 当迁移发现数据库非空且存在没有元数据的表时，自动执行基准迁移，新建schema_version表
       baseline-on-migrate: true
+  
+    # 文件上传配置
+    servlet:
+      multipart:
+        # 单个文件大小限制
+        max-file-size: 5MB
+        # 一次请求中所有上传文件总大小限制
+        max-request-size: 20MB
+  
+  
+  mybatis:
+    # 将包内的映射器接口实现全部注册为映射器
+    type-aliases-package: com.ilovesshan.wjhs.beans
+  
+    # 配置mybatis的mapper路径
+    mapper-locations: classpath:mapper/*.xml
+  
+    configuration:
+      # 是否开启驼峰命名自动映射，即从经典数据库列名 A_COLUMN 映射到经典 Java 属性名 aColumn。
+      map-underscore-to-camel-case: true
+      # 指定 MyBatis 所用日志的具体实现，未指定时将自动查找
+      log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+  
+  
+  # 日志打印级别
+  logging:
+    level:
+      wjhsService: debug
+  
+    group:
+      wjhsService: com.ilovesshan.wjhs.service
   ```
 
   
@@ -719,10 +1046,16 @@ VALUES
   application-dev.yml(开发环境地址)
 
   ```yaml
+  PORT: 80
+  
   MYSQL_ADDRESS: localhost:3306
   MYSQL_DATABASE: wjhs
   MYSQL_USER_NAME: root
   MySQL_PASSWORD: 123456
+  
+  REDIS_HOST: localhost
+  REDIS_PORT: 6379
+  
   ```
 
   
@@ -730,10 +1063,15 @@ VALUES
   application-pro.yml(生产环境地址)
 
   ```yaml
+  PORT: 8127
+  
   MYSQL_ADDRESS: localhost:3306
   MYSQL_DATABASE: wjhs
   MYSQL_USER_NAME: root
   MySQL_PASSWORD: 123456
+  
+  REDIS_HOST: localhost
+  REDIS_PORT: 6379
   ```
 
   
@@ -743,11 +1081,11 @@ VALUES
   ```yaml
   spring:
     application:
-      name: imusic
+      name: wjhs
   
     datasource:
       driver-class-name: org.h2.Driver
-      url: jdbc:h2:mem:wjhs;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE;MODE=MYSQL;
+      url: jdbc:h2:mem:wjhs # MODE=MySQL;LOCK_MODE=0;DB_CLOSE_ON_EXIT=FALSE;database_to_upper=true;NON_KEYWORDS=USER,account,value,key,month
       username: sa
       password:
   
@@ -767,25 +1105,52 @@ VALUES
           web-allow-others: true
   ```
 
-  
 
-+ 使用flyway数据库版本管理工具
 
-  不熟悉可以flyway参考：https://developer.aliyun.com/article/842712、https://zhuanlan.zhihu.com/p/304110137
 
-  在项目的`resources`目录下建立 `db/migration`文件，然后分别建立脚本文件 `V20221124.01__init_create_table.sql` 和  `V20221124.02__init_table_data.sql`，第一个文件内容是 1.2(建表sql)章节中的代码，第二个文件内容是 1.3(数据初始化sql)章节中的代码。
+#### 3、常量配置文件
 
-  
+```java
+public class Constants {
+    // JWT有效期(1天)
+    public static final Long JWT_EXPIRATION = 1000 * 60 * 60 * 24L;
 
-+ 启动项目注意观察控制台日志，启动成功后，在数据库中可以看到已按照定义好的脚本，完成数据库变更，并在`flyway_schema_history`表插入了sql执行记录。
+    // JWT令牌信息
+    public static final String JWT_KEY = "RANDOM";
 
-  
+    // 请求头键
+    public static final String HEADER_KEY = "Authorization";
+
+    // 请求头值(前缀)
+    public static final String HEADER_VALUE_PREFIX = "Bearer ";
+
+    // 小程序请求头值(前缀)
+    public static final String HEADER_WX_VALUE_PREFIX = "Openid ";
+
+    // redis中缓存用户信息(前缀)
+    public static final String REDIS_USER_PREFIX = "user:";
+
+    // redis中缓存小程序用户信息(前缀)
+    public static final String REDIS_WX__USER_PREFIX = "wx:";
+
+    // 附件上传地址(windows)
+    public static final String ATTACHMENT_UPLOAD_WINDOWS_DEST = "D:/www/wjhs/upload/";
+
+    // 附件上传地址(linux)
+    public static final String ATTACHMENT_UPLOAD_LINUX_DEST = "/home/www/wjhs/upload/";
+
+    // 文件预览前缀
+    public static final String FILE_PREVIEW_PREFIX = "/preview/";
+
+}
+
+```
+
+
 
 #### 4、搭建swagger文档库
 
-+ knife4j参考文档：https://doc.xiaominfo.com/docs/quick-start
-
-+ 添加pom依赖
++ 添加依赖
 
   ```xml
   <!-- Swagger2 -->
@@ -803,18 +1168,6 @@ VALUES
   需要注意knife4j和springBoot版本(参考项目代码)，版本不兼容可能会造成项目启动失败。
 
   ```java
-  package com.ilovesshan.wjhs.config;
-  
-  import org.springframework.context.annotation.Bean;
-  import org.springframework.context.annotation.Configuration;
-  import springfox.documentation.builders.ApiInfoBuilder;
-  import springfox.documentation.builders.PathSelectors;
-  import springfox.documentation.builders.RequestHandlerSelectors;
-  import springfox.documentation.service.Contact;
-  import springfox.documentation.spi.DocumentationType;
-  import springfox.documentation.spring.web.plugins.Docket;
-  import springfox.documentation.swagger2.annotations.EnableSwagger2WebMvc;
-  
   @Configuration
   @EnableSwagger2WebMvc
   public class Knife4jConfig {
@@ -856,21 +1209,10 @@ VALUES
 + 使用swagger、新建一个接口Controller类，如下
 
   ```java
-  package com.ilovesshan.wjhs.controller;
-  
-  import io.swagger.annotations.Api;
-  import io.swagger.annotations.ApiOperation;
-  import org.springframework.stereotype.Controller;
-  import org.springframework.web.bind.annotation.GetMapping;
-  import org.springframework.web.bind.annotation.RequestMapping;
-  import org.springframework.web.bind.annotation.ResponseBody;
-  
-  
   @Api(tags = "首页")
   @Controller
   @RequestMapping
   public class IndexController {
-  
       @GetMapping
       @ResponseBody
       @ApiOperation("index")
@@ -885,8 +1227,6 @@ VALUES
   
 
 #### 5、配置跨域 
-
-为了开发方便、这里直接统一后端处理跨域，可以在前端通过代理方式解决跨域问题。
 
 ```java
 @Configuration
@@ -912,7 +1252,7 @@ public class CrossConfig {
 
 
 
-### 第三章、工具类
+### 三、常用工具类
 
 #### 1、客户端响应工具类
 
@@ -1353,6 +1693,14 @@ import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
 
+/**
+ * Created with IntelliJ IDEA.
+ *
+ * @author: ilovesshan
+ * @date: 2022/11/4
+ * @description:
+ */
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -1397,8 +1745,16 @@ public class R implements Serializable {
     public static final String ERROR_USER_DISABLED = "账户不可用";
     public static final String ERROR_USER_LOCKED = "账户锁定";
     public static final String ERROR_USER_NAME_OR_PASSWORD = "用户名或者密码错误";
+    public static final String ERROR_OLD_PASSWORD = "旧密码错误";
     public static final String ERROR_USER_NOT_FOUND = "用户不存在";
     public static final String ERROR_USER_ALREADY_EXIST = "用户已经存在";
+
+
+    public static final String ERROR_RESOURCES_NOTFOUND = "资源不存在";
+    public static final String ERROR_RESOURCES_EXISTS = "资源已存在";
+    public static final String SUCCESS_ATTACHMENT_UPLOAD = "附件上传成功";
+    public static final String ERROR_ATTACHMENT_UPLOAD = "附件上传失败";
+    public static final String ERROR_ATTACHMENT_NOTFOUND = "附件不存在";
 
 
     private Integer code;
@@ -1423,8 +1779,6 @@ public class R implements Serializable {
     }
 
 
-
-
     public static R fail() {
         return R.builder().code(R.ERROR_CODE_CLIENT).message(R.ERROR_MESSAGE).build();
     }
@@ -1440,8 +1794,6 @@ public class R implements Serializable {
     public static R fail(String message, Object data) {
         return R.builder().code(R.ERROR_CODE_CLIENT).message(message).data(data).build();
     }
-
-
 
 
     public static R error() {
@@ -1637,562 +1989,201 @@ public class AesUtils {
 
 
 
-### 第四章、用户授权接口
-
-在之后的代码中：主要贴出controller和service代码、dao层基本就是编写sql语句，代码比较繁琐，详细代码请参考github。
-
-项目中对于各层之间的参数传递，采用了 `POJO，DTO,VO`等相关概念模型，同时使用 ` mapstruct` 工具进行转换。
-
-
-
-#### 1、导入依赖
-
-```xml
-<!-- mapstruct 实体类映射工具-->
-<dependency>
-    <groupId>org.mapstruct</groupId>
-    <artifactId>mapstruct</artifactId>
-    <version>1.4.2.Final</version>
-</dependency>
-
-<dependency>
-    <groupId>org.mapstruct</groupId>
-    <artifactId>mapstruct-processor</artifactId>
-    <version>1.4.2.Final</version>
-</dependency>
-
-
-<!-- token -->
-<dependency>
-    <groupId>io.jsonwebtoken</groupId>
-    <artifactId>jjwt</artifactId>
-    <version>0.9.0</version>
-</dependency>
-
-<!-- redis 缓存中间件 -->
-<dependency>
-    <groupId>org.springframework.boot</groupId>
-    <artifactId>spring-boot-starter-data-redis</artifactId>
-</dependency>
-
-<!-- fastjson -->
-<dependency>
-    <groupId>com.alibaba</groupId>
-    <artifactId>fastjson</artifactId>
-    <version>1.2.68</version>
-</dependency>
-
-
-<!-- HTTP协议的客户端编程工具包 -->
-<dependency>
-    <groupId>org.apache.httpcomponents</groupId>
-    <artifactId>httpclient</artifactId>
-    <version>4.5.2</version>
-</dependency>
-```
-
-
-
-#### 2、常量配置
+#### 11、系统工具类
 
 ```java
-public class Constants {
-    // JWT有效期(1天)
-    public static final Long JWT_EXPIRATION = 1000 * 60 * 60 * 24L;
-
-    // JWT令牌信息
-    public static final String JWT_KEY = "RANDOM";
-
-    // 请求头键
-    public static final String HEADER_KEY = "Authorization";
-
-    // 请求头值(前缀)
-    public static final String HEADER_VALUE_PREFIX = "Bearer ";
-
-    // 小程序请求头值(前缀)
-    public static final String HEADER_WX_VALUE_PREFIX = "Openid ";
-
-    // redis中缓存用户信息(前缀)
-    public static final String REDIS_USER_PREFIX = "user:";
-
-    // redis中缓存小程序用户信息(前缀)
-    public static final String REDIS_WX__USER_PREFIX = "wx:";
-
+public class SystemUtil {
+    /**
+     * 当前系统环境是否是 windows
+     *
+     * @return boolean
+     */
+    public static boolean isWindows() {
+        return System.getProperty("os.name").toLowerCase().startsWith("win");
+    }
 }
 ```
 
 
 
-#### 3、更新用户密码sql脚本
 
-更新原因：项目中使用了一套`AES`的加解密算法工具，我们在 `V20221124.02__init_table_data.sql` 文件中初始化数据时，填写的是明文，这里需要更新对明文进行加密，让其 `AES`能够正确的识别。
 
-```tex
-admin初始密码：123456
-加密密码：_hSF8lwCW9Ha2zdsii0AjaOSsVwKQ28Ti3SUe144KXU=
+### 四、用户授权
 
-sunlei初始密码：sunlei123456!@#
-加密密码：qtLSKnRZzQ6j7ERhHQLLfu9Nx1WsdWe87EfQ6mABoTU=
+#### 1、普通用户
 
-ilovesshan初始密码：ilovesshan123456!@#
-加密密码：Vm4gI_I5r6uH6FaHvT17168U_HhMxNfQCYgN1Ro6Jz23fkEPuSL_W0PkYsW1u27P
+```java
+@Data
+public class UserAuthDto {
+    @NotNull(message = "用户名不能为空")
+    @Size(max = 24, min = 4, message = "用户名长度在4到24个字符之间")
+    private String username;
+    @NotNull(message = "密码不能为空")
+    @Size(max = 32, min = 6, message = "密码长度在6到32个字符之间")
+    private String password;
+}
+```
+
+```java
+@Component
+@Mapper(componentModel = "spring")
+public interface UserConverter {
+    UserVo po2vo(User user);
+}
+```
+
+```java
+@Api(tags = "授权模块")
+@RestController
+@RequestMapping("/auth")
+public class AuthController {
+
+    @Autowired
+    private AuthService authService;
+
+    @ApiOperation("用户授权")
+    @PostMapping
+    public R auth(@Validated @RequestBody UserAuthDto userAuthDto) {
+        String token = authService.auth(userAuthDto);
+        HashMap<String, String> data = new HashMap<>();
+        data.put("id", JwtUtil.getUserId(token));
+        data.put("username", userAuthDto.getUsername());
+        data.put("token", token);
+        return R.success(R.SUCCESS_MESSAGE_LOGIN, data);
+    }
+
+    @ApiOperation("用户注销")
+    @DeleteMapping
+    public R logout() {
+        authService.logout();
+        return R.success(R.SUCCESS_MESSAGE_LOGOUT);
+    }
+}
+```
+
+```java
+@Service
+@Slf4j
+public class AuthServiceImpl implements AuthService {
+
+    @Autowired
+    private RedisCache redisCache;
+
+    @Autowired
+    private UserService userService;
+
+    @Override
+    public String auth(UserAuthDto userAuthDto) {
+        User finedUser = userService.findUserByUsername(userAuthDto.getUsername());
+        // 用户不存在
+        if (Objects.isNull(finedUser)) {
+            throw new CustomException(R.ERROR_USER_NOT_FOUND);
+        }
+
+        // 用户名或者密码错误
+        if (!userAuthDto.getPassword().equals(AesUtils.decrypt(finedUser.getPassword()))) {
+            throw new CustomException(R.ERROR_USER_NAME_OR_PASSWORD);
+        }
+
+        // 将用户登录信息存在redis中
+        redisCache.set(Constants.REDIS_USER_PREFIX + finedUser.getId(), finedUser, Constants.JWT_EXPIRATION);
+
+        //  返回Token
+        return JwtUtil.generatorToken(finedUser.getId(), finedUser.getUsername());
+    }
+
+    @Override
+    public void logout() {
+        String userId = UserCache.get("userId");
+        String username = UserCache.get("username");
+
+        // 从redis中删除用户信息
+        redisCache.remove(Constants.REDIS_USER_PREFIX + userId);
+
+        log.debug("{}退出登录, 用户ID: {}", username, userId);
+    }
+}
 ```
 
 
 
-新增脚本名称：`V20221203.01__update_user_password.sql`
+#### 2、小程序用户
 
-```sql
-update
-    `user`
-set
-    password = '_hSF8lwCW9Ha2zdsii0AjaOSsVwKQ28Ti3SUe144KXU='
-where
-    id = '369BCFE480454D22A07A8644F6DF0349';
+```java
+@Api(tags = "小程序授权模块")
+@RestController
+@RequestMapping("/wx/auth")
+public class WxAuthController {
 
+    @Autowired
+    private WxAuthService wxAuthService;
 
+    @Autowired
+    private WxUserConverter wxUserConverter;
 
-update
-    `user`
-set
-    password = 'qtLSKnRZzQ6j7ERhHQLLfu9Nx1WsdWe87EfQ6mABoTU='
-where
-    id = 'ADBD5F0E46474696B65140568E43385E';
+    @ApiOperation("授权")
+    @PostMapping
+    public R auth(@RequestParam(value = "code", required = false) String code) {
+        WxUser wxUser = wxAuthService.auth(code);
+        return R.success(R.SUCCESS_MESSAGE_LOGIN, wxUserConverter.po2AuthVo(wxUser));
+    }
+}
+```
 
+```java
+@Service
+public class WxAuthServiceImpl implements WxAuthService {
 
+    @Autowired
+    private RedisCache redisCache;
 
-    update
-        `user`
-    set
-        password = 'Vm4gI_I5r6uH6FaHvT17168U_HhMxNfQCYgN1Ro6Jz23fkEPuSL_W0PkYsW1u27P'
-    where
-        id = 'F2532E33786F4B8D9FA2DB00F03352FB';
+    @Autowired
+    private WxUserService wxUserService;
+
+    @Override
+    public WxUser auth(String code) {
+        // 获取sessionKey和openId
+        JSONObject SessionKeyOpenId = WxChatUtil.getSessionKeyAndOpenId(code);
+        String openid = SessionKeyOpenId.getString("openid");
+        String sessionKey = SessionKeyOpenId.getString("session_key");
+
+        // 如果sessionKey或者openId无效
+        if (!StringUtils.hasText(openid) || !StringUtils.hasText(sessionKey)) {
+            throw new AuthorizationException(R.ERROR_WX_VALID_CODE);
+        }
+
+        // 根据openid去数据库查询、不存在就是新用户 存在就更新登录时间
+        WxUser selectedUser = wxUserService.findUserByOpenId(openid);
+        if (Objects.isNull(selectedUser)) {
+            WxUser wxUser = new WxUser();
+            wxUser.setId(UuidUtil.generator());
+            wxUser.setOpenId(openid);
+            wxUser.setSessionKey(sessionKey);
+            wxUser.setSkey(UuidUtil.generator());
+            wxUser.setLastVisitTime(new Date());
+            wxUserService.insert(wxUser);
+            // 将用户登录信息存在redis中
+            redisCache.set(Constants.REDIS_WX__USER_PREFIX + wxUser.getOpenId(), wxUser, Constants.JWT_EXPIRATION);
+            return wxUser;
+        } else {
+            // 更新最后登录时间
+            selectedUser.setLastVisitTime(new Date());
+            wxUserService.update(selectedUser);
+            // 将用户登录信息存在redis中
+            redisCache.set(Constants.REDIS_WX__USER_PREFIX + selectedUser.getOpenId(), selectedUser, Constants.JWT_EXPIRATION);
+            return selectedUser;
+        }
+    }
+}
 ```
 
 
 
-#### 4、集成Redis
-
-+ 配置Redis连接环境
-
-  ```yaml
-  # application.yml
-  
-  spring
-    # redis 配置
-    redis:
-      port: ${REDIS_PORT}
-      host: ${REDIS_HOST}
-  ```
-
-  ```yaml
-  # application-dev.yml
-  
-  REDIS_HOST: localhost
-  REDIS_PORT: 6379
-  ```
-
-  
-
-#### 5、用户授权接口
-
-+ 普通用户
-
-  ```java
-  @Data
-  public class UserAuthDto {
-      @NotNull(message = "用户名不能为空")
-      @Size(max = 24, min = 4, message = "用户名长度在4到24个字符之间")
-      private String username;
-      @NotNull(message = "密码不能为空")
-      @Size(max = 32, min = 6, message = "密码长度在6到32个字符之间")
-      private String password;
-  }
-  ```
-
-  ```java
-  @Component
-  @Mapper(componentModel = "spring")
-  public interface UserConverter {
-      UserVo po2vo(User user);
-  }
-  ```
-
-  ```java
-  package com.ilovesshan.wjhs.controller;
-  
-  import com.ilovesshan.wjhs.beans.dto.UserAuthDto;
-  import com.ilovesshan.wjhs.service.AuthService;
-  import com.ilovesshan.wjhs.utils.JwtUtil;
-  import com.ilovesshan.wjhs.utils.R;
-  import io.swagger.annotations.Api;
-  import io.swagger.annotations.ApiOperation;
-  import org.springframework.beans.factory.annotation.Autowired;
-  import org.springframework.validation.annotation.Validated;
-  import org.springframework.web.bind.annotation.*;
-  
-  import java.util.HashMap;
-  
-  @Api(tags = "授权模块")
-  @RestController
-  @RequestMapping("/auth")
-  public class AuthController {
-  
-      @Autowired
-      private AuthService authService;
-  
-      @ApiOperation("用户授权")
-      @PostMapping
-      public R auth(@Validated @RequestBody UserAuthDto userAuthDto) {
-          String token = authService.auth(userAuthDto);
-          HashMap<String, String> data = new HashMap<>();
-          data.put("id", JwtUtil.getUserId(token));
-          data.put("username", userAuthDto.getUsername());
-          data.put("token", token);
-          return R.success(R.SUCCESS_MESSAGE_LOGIN, data);
-      }
-  
-      @ApiOperation("用户注销")
-      @DeleteMapping
-      public R logout() {
-          authService.logout();
-          return R.success(R.SUCCESS_MESSAGE_LOGOUT);
-      }
-  }
-  ```
-
-  ```java
-  package com.ilovesshan.wjhs.service.impl;
-  
-  import com.ilovesshan.wjhs.beans.dto.UserAuthDto;
-  import com.ilovesshan.wjhs.beans.pojo.User;
-  import com.ilovesshan.wjhs.contants.Constants;
-  import com.ilovesshan.wjhs.core.base.UserCache;
-  import com.ilovesshan.wjhs.core.config.RedisCache;
-  import com.ilovesshan.wjhs.core.exception.CustomException;
-  import com.ilovesshan.wjhs.service.AuthService;
-  import com.ilovesshan.wjhs.service.UserService;
-  import com.ilovesshan.wjhs.utils.AesUtils;
-  import com.ilovesshan.wjhs.utils.JwtUtil;
-  import com.ilovesshan.wjhs.utils.R;
-  import lombok.extern.slf4j.Slf4j;
-  import org.springframework.beans.factory.annotation.Autowired;
-  import org.springframework.stereotype.Service;
-  
-  import java.util.Objects;
-  
-  
-  @Service
-  @Slf4j
-  public class AuthServiceImpl implements AuthService {
-  
-      @Autowired
-      private RedisCache redisCache;
-  
-      @Autowired
-      private UserService userService;
-  
-      @Override
-      public String auth(UserAuthDto userAuthDto) {
-          User finedUser = userService.findUserByUsername(userAuthDto.getUsername());
-          // 用户不存在
-          if (Objects.isNull(finedUser)) {
-              throw new CustomException(R.ERROR_USER_NOT_FOUND);
-          }
-  
-          // 用户名或者密码错误
-          if (!userAuthDto.getPassword().equals(AesUtils.decrypt(finedUser.getPassword()))) {
-              throw new CustomException(R.ERROR_USER_NAME_OR_PASSWORD);
-          }
-  
-          // 将用户登录信息存在redis中
-          redisCache.set(Constants.REDIS_USER_PREFIX + finedUser.getId(), finedUser, Constants.JWT_EXPIRATION);
-  
-          //  返回Token
-          return JwtUtil.generatorToken(finedUser.getId(), finedUser.getUsername());
-      }
-  
-      @Override
-      public void logout() {
-          String userId = UserCache.get("userId");
-          String username = UserCache.get("username");
-  
-          // 从redis中删除用户信息
-          redisCache.remove(Constants.REDIS_USER_PREFIX + userId);
-  
-          log.debug("{}退出登录, 用户ID: {}", username, userId);
-      }
-  }
-  
-  ```
-
-  ```java
-  @Mapper
-  public interface UserMapper {
-      // 根据用户名查用户
-      User findUserByUsername(String username);
-     // 根据ID查用户
-      User findUserById(String id);
-  }
-  ```
-
-  
-
-+ 小程序用户
-
-  ```java
-  package com.ilovesshan.wjhs.controller;
-  
-  import com.ilovesshan.wjhs.beans.converter.WxUserConverter;
-  import com.ilovesshan.wjhs.beans.pojo.WxUser;
-  import com.ilovesshan.wjhs.service.WxAuthService;
-  import com.ilovesshan.wjhs.utils.R;
-  import io.swagger.annotations.Api;
-  import io.swagger.annotations.ApiOperation;
-  import org.springframework.beans.factory.annotation.Autowired;
-  import org.springframework.web.bind.annotation.PostMapping;
-  import org.springframework.web.bind.annotation.RequestMapping;
-  import org.springframework.web.bind.annotation.RequestParam;
-  import org.springframework.web.bind.annotation.RestController;
-  
-  
-  @Api(tags = "小程序授权模块")
-  @RestController
-  @RequestMapping("/wx/auth")
-  public class WxAuthController {
-  
-      @Autowired
-      private WxAuthService wxAuthService;
-  
-      @Autowired
-      private WxUserConverter wxUserConverter;
-  
-      @ApiOperation("授权")
-      @PostMapping
-      public R auth(@RequestParam(value = "code", required = false) String code) {
-          WxUser wxUser = wxAuthService.auth(code);
-          return R.success(R.SUCCESS_MESSAGE_LOGIN, wxUserConverter.po2AuthVo(wxUser));
-      }
-  }
-  ```
-
-  
-
-  `WxAuthService` 调用 `WxUserService` 中的业务方法、`WxUserService` 调用 `WxUserMapper` 进行增删改查。
-
-  ```java
-  package com.ilovesshan.wjhs.service.impl;
-  
-  import com.alibaba.fastjson.JSONObject;
-  import com.ilovesshan.wjhs.beans.pojo.WxUser;
-  import com.ilovesshan.wjhs.contants.Constants;
-  import com.ilovesshan.wjhs.core.config.RedisCache;
-  import com.ilovesshan.wjhs.core.exception.AuthorizationException;
-  import com.ilovesshan.wjhs.service.WxAuthService;
-  import com.ilovesshan.wjhs.service.WxUserService;
-  import com.ilovesshan.wjhs.utils.R;
-  import com.ilovesshan.wjhs.utils.UuidUtil;
-  import com.ilovesshan.wjhs.utils.WxChatUtil;
-  import org.springframework.beans.factory.annotation.Autowired;
-  import org.springframework.stereotype.Service;
-  import org.springframework.util.StringUtils;
-  
-  import java.util.Date;
-  import java.util.Objects;
-  
-  @Service
-  public class WxAuthServiceImpl implements WxAuthService {
-  
-      @Autowired
-      private RedisCache redisCache;
-  
-      @Autowired
-      private WxUserService wxUserService;
-  
-      @Override
-      public WxUser auth(String code) {
-          // 获取sessionKey和openId
-          JSONObject SessionKeyOpenId = WxChatUtil.getSessionKeyAndOpenId(code);
-          String openid = SessionKeyOpenId.getString("openid");
-          String sessionKey = SessionKeyOpenId.getString("session_key");
-  
-          // 如果sessionKey或者openId无效
-          if (!StringUtils.hasText(openid) || !StringUtils.hasText(sessionKey)) {
-              throw new AuthorizationException(R.ERROR_WX_VALID_CODE);
-          }
-  
-          // 根据openid去数据库查询、不存在就是新用户 存在就更新登录时间
-          WxUser selectedUser = wxUserService.findUserByOpenId(openid);
-          if (Objects.isNull(selectedUser)) {
-              WxUser wxUser = new WxUser();
-              wxUser.setId(UuidUtil.generator());
-              wxUser.setOpenId(openid);
-              wxUser.setSessionKey(sessionKey);
-              wxUser.setSkey(UuidUtil.generator());
-              wxUser.setLastVisitTime(new Date());
-              wxUserService.insert(wxUser);
-              // 将用户登录信息存在redis中
-              redisCache.set(Constants.REDIS_WX__USER_PREFIX + wxUser.getOpenId(), wxUser, Constants.JWT_EXPIRATION);
-              return wxUser;
-          } else {
-              // 更新最后登录时间
-              selectedUser.setLastVisitTime(new Date());
-              wxUserService.update(selectedUser);
-              // 将用户登录信息存在redis中
-              redisCache.set(Constants.REDIS_WX__USER_PREFIX + selectedUser.getOpenId(), selectedUser, Constants.JWT_EXPIRATION);
-              return selectedUser;
-          }
-      }
-  }
-  
-  ```
-
-  ```java
-  public interface WxUserService {
-      WxUser findUserByOpenId(String openid);
-  
-      boolean insert(WxUser wxUser);
-  
-      boolean update(WxUser wxUser);
-  
-      WxUser findUserById(String id);
-  }
-  
-  
-  
-  @Mapper
-  public interface WxUserMapper {
-      WxUser findUserByOpenId(String openid);
-  
-      int insert(WxUser wxUser);
-  
-      int update(WxUser wxUser);
-  
-      WxUser findUserById(String id);
-  }
-  
-  ```
-
-  
-
-#### 7、获取用户信息接口
-
-+ 普通用户
-
-  ```java
-  @Api(tags = "用户模块")
-  @RestController
-  @RequestMapping("/users")
-  public class UserController {
-  
-      @Autowired
-      private UserService userService;
-  
-      @Autowired
-      private UserConverter userConverter;
-  
-  
-      @ApiOperation("根据ID获取用户信息")
-      @GetMapping("/{id}")
-      public R selectById(@PathVariable String id) {
-          User user = userService.findUserById(id);
-          return R.success(R.SUCCESS_MESSAGE_SELECT, userConverter.po2vo(user));
-      }
-  }
-  ```
-
-  
-
-+ 小程序用户
-
-  ```java
-  @Api(tags = "小程序用户模块")
-  @RestController
-  @RequestMapping("/wx/users")
-  public class WxUserController {
-  
-      @Autowired
-      private WxUserService wxUserService;
-  
-      @Autowired
-      private WxUserConverter wxUserConverter;
-  
-      @ApiOperation("根据ID获取用户信息")
-      @GetMapping("/{id}")
-      public R auth(@PathVariable String id) {
-          WxUser wxUser = wxUserService.findUserById(id);
-          return R.success(R.SUCCESS_MESSAGE_SELECT, wxUserConverter.po2vo(wxUser));
-      }
-  }
-  ```
-
-
-
-#### 8、获取数据字典接口
-
-+ 具体的字段设计请参考数据库设计
-
-  ```java
-  @Api(tags = "字典模块")
-  @RestController
-  @RequestMapping("/systemDict")
-  public class SystemDictController {
-  
-      @Autowired
-      private SystemDictService systemDictService;
-  
-      @Autowired
-      private SystemDictConverter systemDictConverter;
-  
-      @GetMapping
-      @ApiOperation("查询字典列表")
-      public R selectAll() {
-          List<SystemDict> systemDicts = systemDictService.selectAll();
-          List<SystemDictVo> systemDictVos = systemDicts.stream().map(systemDict -> systemDictConverter.po2vo(systemDict)).collect(Collectors.toList());
-          return R.success(R.SUCCESS_MESSAGE_SELECT, systemDictVos);
-      }
-  }
-  ```
-
-  ```java
-  public interface SystemDictService {
-      List<SystemDict> selectAll();
-  }
-  
-  @Mapper
-  public interface SystemDictMapper {
-      List<SystemDict> selectAll();
-  }
-  ```
-
-  
-
-#### 10、使用拦截器进行鉴权
-
-会发现，现在项目的全部接口是不安全的，可以任意访问，这存在一定的安全隐患，所以下面配置拦截器，对部分接口实现拦截，需要客户端带有一定的凭证才能够访问。
+#### 3、拦截器鉴权
 
 + 添加自定义拦截器 `SecurityHandlerInterceptor` 并实现 `HandlerInterceptor`接口，重写 `preHandle` 方法。
 
   ```java
-  package com.ilovesshan.wjhs.core.inceptor;
-  
-  import com.ilovesshan.wjhs.beans.pojo.User;
-  import com.ilovesshan.wjhs.beans.pojo.WxUser;
-  import com.ilovesshan.wjhs.contants.Constants;
-  import com.ilovesshan.wjhs.core.base.UserCache;
-  import com.ilovesshan.wjhs.core.config.RedisCache;
-  import com.ilovesshan.wjhs.core.exception.AuthorizationException;
-  import com.ilovesshan.wjhs.utils.JwtUtil;
-  import com.ilovesshan.wjhs.utils.R;
-  import com.ilovesshan.wjhs.utils.ResponseUtil;
-  import org.springframework.beans.factory.annotation.Autowired;
-  import org.springframework.util.StringUtils;
-  import org.springframework.web.servlet.HandlerInterceptor;
-  
-  import javax.servlet.http.HttpServletRequest;
-  import javax.servlet.http.HttpServletResponse;
-  import java.util.Objects;
-  
   public class SecurityHandlerInterceptor implements HandlerInterceptor {
   
       @Autowired
@@ -2236,20 +2227,10 @@ where
   }
   
   ```
-
+  
 + 添加自定类 `WebMvcConfig` 实现 `WebMvcConfigurer` 接口，重写 `addResourceHandlers` 和 `addInterceptors` 方法。
 
   ```java
-  package com.ilovesshan.wjhs.core.config;
-  
-  import com.ilovesshan.wjhs.core.inceptor.SecurityHandlerInterceptor;
-  import org.springframework.context.annotation.Bean;
-  import org.springframework.context.annotation.Configuration;
-  import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
-  import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
-  import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
-  
-  
   @Configuration
   public class WebMvcConfig implements WebMvcConfigurer {
   
@@ -2272,983 +2253,293 @@ where
 
 
 
-### 第五章、操作日志模块
+### 五、异步操作日志
 
-#### 1、添加spring支持切面编程依赖
+#### 1、自定义注解
 
-```xml
-<!-- 支持 切面编程 -->
-<dependency>
-    <groupId>org.springframework.boot</groupId>
-    <artifactId>spring-boot-starter-aop</artifactId>
-</dependency>
+```java
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.METHOD)
+public @interface Log {
+    // 业务模块
+    String businessModule();
+
+    // 业务类型
+    String businessType();
+
+    // 描述信息
+    String businessDescribe() default "";
+}
+
 ```
 
 
 
-#### 2、数据库脚本更新
-
-+ 更新日志表中url数据长度
-
-  `V20221204.01__update_operation_log_table_structure.sql`
-
-  ```sql
-  -- 更新日志表中url数据长度
-  alter table operation_log modify `url` VARCHAR(255) NOT NULL COMMENT '请求url';
-  ```
-
-  
-
-#### 3、异步日志实现
-
-+ 自定义注解
-
-  ```java
-  @Retention(RetentionPolicy.RUNTIME)
-  @Target(ElementType.METHOD)
-  public @interface Log {
-      // 业务模块
-      String businessModule();
-  
-      // 业务类型
-      String businessType();
-  
-      // 描述信息
-      String businessDescribe() default "";
-  }
-  
-  ```
-
-  
-
-+ 定义切面
-
-  ```java
-  @Aspect
-  @Component
-  public class LogAspect {
-  
-      @Autowired
-      private OperationLogService operationLogService;
-  
-      // 最终通知
-      @AfterReturning(pointcut = "@annotation(log)")
-      public void afterReturningAdvice(JoinPoint joinPoint, Log log) {
-          OperationLog operationLog = generatorLogOperation(joinPoint, log, null);
-          operationLogService.insert(operationLog);
-      }
-  
-  
-      // 异常通知
-      @AfterThrowing(pointcut = "@annotation(log)", throwing = "exception")
-      public void afterThrowingAdvice(JoinPoint joinPoint, Log log, Exception exception) {
-          OperationLog operationLog = generatorLogOperation(joinPoint, log, exception);
-          operationLogService.insert(operationLog);
-      }
-  
-  
-      public OperationLog generatorLogOperation(JoinPoint joinPoint, Log log, Exception exception) {
-          HttpServletRequest request = ((ServletRequestAttributes) Objects.requireNonNull(RequestContextHolder.getRequestAttributes())).getRequest();
-          OperationLog operationLog = new OperationLog();
-          operationLog.setId(UuidUtil.generator());
-          operationLog.setBusinessModule(log.businessModule());
-          operationLog.setBusinessType(log.businessType());
-          operationLog.setBusinessDescribe(log.businessDescribe());
-          operationLog.setApiMethod(joinPoint.getSignature().getName());
-          operationLog.setRequestMethod(request.getMethod());
-          operationLog.setUserId(UserCache.get("userId"));
-          operationLog.setUserName(UserCache.get("username"));
-          operationLog.setUserType(UserCache.get("userType"));
-          operationLog.setUrl(request.getRequestURI());
-          operationLog.setIp(request.getRemoteAddr());
-          if (exception == null) {
-              operationLog.setStatus("200");
-              operationLog.setErrorMessage("");
-          } else {
-              operationLog.setStatus("500");
-              operationLog.setErrorMessage(exception.getMessage());
-          }
-          operationLog.setOperationTime(new Date());
-  
-          return operationLog;
-      }
-  
-  }
-  ```
-
-  
-
-+ 定义service层
-
-  ```java
-  public interface OperationLogService {
-      void insert(OperationLog operationLog);
-  }
-  ```
-
-  ```java
-  @Service
-  public class OperationLogServiceImpl implements OperationLogService {
-  
-      @Autowired
-      private OperationLogMapper operationLogMapper;
-  
-  	// 这里使用 @Async注解、可以实现异步功能提高UI响应速度
-      //  @Async注解需要 使用@EnableAsync注解后，才生效
-      @Async
-      @Override
-      public void insert(OperationLog operationLog) {
-          operationLogMapper.insert(operationLog);
-      }
-  }
-  ```
-
-  
-
-+ mapper层
-
-  ```java
-  @Mapper
-  public interface OperationLogMapper {
-      int insert(OperationLog operationLog);
-  }
-  ```
-
-  ```xml
-  <?xml version="1.0" encoding="UTF-8" ?>
-  <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
-  <mapper namespace="com.ilovesshan.wjhs.mapper.OperationLogMapper">
-  
-      <sql id="allColumns">
-          `id`, `business_module`, `business_type`, `business_describe`, `api_method`, `request_method`, `user_id`, `user_name`, `user_type`, `url`, `ip`, `status`, `is_delete`, `error_message`, `operation_time`
-      </sql>
-  
-      <insert id="insert">
-          insert into
-              `wjhs`.`operation_log` (`id`, `business_module`, `business_type`, `business_describe`, `api_method`, `request_method`, `user_id`, `user_name`, `user_type`, `url`, `ip`, `status`, `error_message`, `operation_time`)
-          values
-              (#{id}, #{businessModule}, #{businessType}, #{businessDescribe}, #{apiMethod}, #{requestMethod}, #{userId}, #{userName}, #{userType}, #{url}, #{ip}, #{status}, #{errorMessage}, #{operationTime});
-      </insert>
-  
-  </mapper>
-  ```
-
-  
-
-+ 添加开启异步任务的注解 `@EnableAsync`
-
-  ```java
-  @SpringBootApplication
-  @EnableAsync
-  public class WjhsApplication {
-  
-      public static void main(String[] args) {
-          SpringApplication.run(WjhsApplication.class, args);
-      }
-  }
-  ```
-
-+ `@Log`使用方法
-
-  ```java
-  @Log(businessModule = "附件模块", businessType = "POST", businessDescribe = "上传附件")   
-  @ApiOperation("上传附件")
-  @PostMapping
-  public void upload() {
-      // ...
-  }
-  
-  @Log(businessModule = "附件模块", businessType = "DELETE", businessDescribe = "根据ID删除附件")
-  @ApiOperation("根据ID删除附件")
-  @DeleteMapping("/{id}")
-  public void deleteById(@PathVariable String id) {
-          // ...
-  }
-  ```
-
-  
-
-### 第五章、文件管理模块
-
-
-
-#### 1、添加常量配置
+#### 2、定义切面
 
 ```java
-public class Constants {
-    // ...
+@Aspect
+@Component
+public class LogAspect {
 
-    // 附件上传地址(windows)
-    public static final String ATTACHMENT_UPLOAD_WINDOWS_DEST = "D:/www/wjhs/upload/";
+    @Autowired
+    private OperationLogService operationLogService;
 
-    // 附件上传地址(linux)
-    public static final String ATTACHMENT_UPLOAD_LINUX_DEST = "/home/www/wjhs/upload/";
+    // 最终通知
+    @AfterReturning(pointcut = "@annotation(log)")
+    public void afterReturningAdvice(JoinPoint joinPoint, Log log) {
+        OperationLog operationLog = generatorLogOperation(joinPoint, log, null);
+        operationLogService.insert(operationLog);
+    }
 
-    // 附件预览前缀
-    public static final String FILE_PREVIEW_PREFIX = "/preview/";
+
+    // 异常通知
+    @AfterThrowing(pointcut = "@annotation(log)", throwing = "exception")
+    public void afterThrowingAdvice(JoinPoint joinPoint, Log log, Exception exception) {
+        OperationLog operationLog = generatorLogOperation(joinPoint, log, exception);
+        operationLogService.insert(operationLog);
+    }
+
+
+    public OperationLog generatorLogOperation(JoinPoint joinPoint, Log log, Exception exception) {
+        HttpServletRequest request = ((ServletRequestAttributes) Objects.requireNonNull(RequestContextHolder.getRequestAttributes())).getRequest();
+        OperationLog operationLog = new OperationLog();
+        operationLog.setId(UuidUtil.generator());
+        operationLog.setBusinessModule(log.businessModule());
+        operationLog.setBusinessType(log.businessType());
+        operationLog.setBusinessDescribe(log.businessDescribe());
+        operationLog.setApiMethod(joinPoint.getSignature().getName());
+        operationLog.setRequestMethod(request.getMethod());
+        operationLog.setUserId(UserCache.get("userId"));
+        operationLog.setUserName(UserCache.get("username"));
+        operationLog.setUserType(UserCache.get("userType"));
+        operationLog.setUrl(request.getRequestURI());
+        operationLog.setIp(request.getRemoteAddr());
+        if (exception == null) {
+            operationLog.setStatus("200");
+            operationLog.setErrorMessage("");
+        } else {
+            operationLog.setStatus("500");
+            operationLog.setErrorMessage(exception.getMessage());
+        }
+        operationLog.setOperationTime(new Date());
+
+        return operationLog;
+    }
 
 }
 ```
 
-```java
-// 在R.java 中添加通用的常量信息
 
-public static final String ERROR_RESOURCES_NOTFOUND = "资源不存在";
-public static final String SUCCESS_ATTACHMENT_UPLOAD = "附件上传成功";
-public static final String ERROR_ATTACHMENT_UPLOAD = "附件上传失败";
-public static final String ERROR_ATTACHMENT_NOTFOUND = "附件不存在";
+
+#### 3、service层
+
+```java
+public interface OperationLogService {
+    void insert(OperationLog operationLog);
+}
 ```
 
-
-
-#### 2、获取当前操作系统工具类
-
 ```java
-public class SystemUtil {
-    /**
-     * 当前系统环境是否是 windows
-     *
-     * @return boolean
-     */
-    public static boolean isWindows() {
-        return System.getProperty("os.name").toLowerCase().startsWith("win");
+@Service
+public class OperationLogServiceImpl implements OperationLogService {
+
+    @Autowired
+    private OperationLogMapper operationLogMapper;
+
+	// 这里使用 @Async注解、可以实现异步功能提高UI响应速度
+    //  @Async注解需要 使用@EnableAsync注解后，才生效
+    @Async
+    @Override
+    public void insert(OperationLog operationLog) {
+        operationLogMapper.insert(operationLog);
     }
 }
-
 ```
 
 
 
-#### 3、配置文件上传参数
+#### 4、@EnableAsync 注解
 
-+ yaml中配置文件上传参数
+```java
+@SpringBootApplication
+@EnableAsync
+public class WjhsApplication {
 
-  ```yaml
-  spring
-   # 文件上传配置
-    servlet:
-      multipart:
-        # 单个文件大小限制
-        max-file-size: 5MB
-        # 一次请求中所有上传文件总大小限制
-        max-request-size: 20MB
-  ```
-
-  
-
-+ 配置文件预览虚拟路径
-
-  ```java
-  @Configuration
-  public class WebMvcConfig implements WebMvcConfigurer {
-  
-      // 注入拦截器
-      // ...
-  
-  
-      @Override
-      public void addResourceHandlers(ResourceHandlerRegistry registry) {
-          // 区分当前运行的系统环境
-          registry.addResourceHandler("/preview/**").addResourceLocations("file:" + (SystemUtil.isWindows() ? Constants.ATTACHMENT_UPLOAD_WINDOWS_DEST : Constants.ATTACHMENT_UPLOAD_LINUX_DEST));
-      }
-  
-  
-      @Override
-      public void addInterceptors(InterceptorRegistry registry) {
-          // ...
-      }
-  }
-  ```
-
-  
-
-#### 4、文件上传实现
-
-+ `PO、VO、DTO` 定义，请参考项目源码
-
-  
-
-+ controller层
-
-  ```java
-  @Api(tags = "附件模块")
-  @RestController
-  @RequestMapping("attachments")
-  public class AttachmentController {
-  
-      @Autowired
-      private AttachmentService attachmentService;
-  
-      @Autowired
-      private AttachmentConverter attachmentConverter;
-  
-      @ApiOperation("上传附件")
-      @PostMapping
-      @Log(businessModule = "附件模块", businessType = "POST", businessDescribe = "上传附件")
-      public R upload(@RequestParam("file") MultipartFile file) {
-          String attachmentId = attachmentService.upload(file);
-          Attachment attachment = attachmentService.selectById(attachmentId);
-          return R.success(R.SUCCESS_ATTACHMENT_UPLOAD, attachmentConverter.po2vo(attachment));
-      }
-  
-  
-      @ApiOperation("根据ID查询附件")
-      @GetMapping("/{id}")
-      public R select(@PathVariable String id) {
-          Attachment attachment = attachmentService.selectById(id);
-          return R.success(R.SUCCESS_MESSAGE_SELECT, attachmentConverter.po2vo(attachment));
-      }
-  
-  
-      @Log(businessModule = "附件模块", businessType = "DELETE", businessDescribe = "根据ID删除附件")
-      @ApiOperation("根据ID删除附件")
-      @DeleteMapping("/{id}")
-      public R deleteById(@PathVariable String id) {
-          attachmentService.deleteById(id);
-          return R.success(R.SUCCESS_MESSAGE_DELETE);
-      }
-  }
-  ```
-
-  
-
-+ service层
-
-  ```java
-  public interface AttachmentService {
-      String upload(MultipartFile multipartFile);
-  
-      boolean saveAttachment(Attachment attachment);
-  
-      Attachment selectById(String id);
-  
-      boolean deleteById(String id);
-  }
-  ```
-
-  ```java
-  @Service
-  @Slf4j
-  public class AttachmentServiceImpl implements AttachmentService {
-  
-      @Autowired
-      private AttachmentMapper attachmentMapper;
-  
-      @Override
-      public String upload(MultipartFile multipartFile) {
-          // 区分当前运行的系统环境
-          File fileDir = new File(SystemUtil.isWindows() ? Constants.ATTACHMENT_UPLOAD_WINDOWS_DEST : Constants.ATTACHMENT_UPLOAD_LINUX_DEST);
-  
-          if (!fileDir.exists()) {
-              fileDir.mkdirs();
-          }
-          // 获取文件扩展名
-          String ext = multipartFile.getOriginalFilename().substring(multipartFile.getOriginalFilename().lastIndexOf("."));
-  
-          // 文件名称
-          String fileName = UuidUtil.generator() + ext;
-  
-          try {
-              multipartFile.transferTo(new File(fileDir + File.separator + fileName));
-          } catch (IOException e) {
-              e.printStackTrace();
-              throw new CustomException(R.ERROR_ATTACHMENT_UPLOAD);
-          }
-  
-          // 组装一个Attachment对象 新增到数据库
-          Attachment attachment = new Attachment();
-          attachment.setId(UuidUtil.generator());
-          attachment.setUrl(Constants.FILE_PREVIEW_PREFIX + fileName);
-          attachment.setCreateByUserId(UserCache.get("userId"));
-          attachment.setCreateByUserName(UserCache.get("username"));
-          attachment.setCreateByUserType(UserCache.get("userType"));
-          saveAttachment(attachment);
-          return attachment.getId();
-      }
-  
-  
-      @Override
-      public boolean saveAttachment(Attachment attachment) {
-          return attachmentMapper.insert(attachment) > 0;
-      }
-  
-      @Override
-      public Attachment selectById(String id) {
-          return attachmentMapper.selectById(id);
-      }
-  
-      @Override
-      public boolean deleteById(String id) {
-          Attachment finedAttachment = selectById(id);
-          if (Objects.isNull(finedAttachment)) {
-              throw new CustomException(R.ERROR_ATTACHMENT_NOTFOUND);
-          }
-  
-          String filePath = (SystemUtil.isWindows() ? Constants.ATTACHMENT_UPLOAD_WINDOWS_DEST : Constants.ATTACHMENT_UPLOAD_LINUX_DEST) + finedAttachment.getUrl();
-          // 删除本地文件  替换掉 "//preview" 预览前缀
-          boolean deleteSuccess = new File(filePath.replace("//preview", "")).delete();
-          if (deleteSuccess) {
-              // 删除数据库文件
-              return attachmentMapper.deleteById(id) > 0;
-          } else {
-              throw new CustomException(R.ERROR_MESSAGE_DELETE);
-          }
-      }
-  }
-  
-  ```
-
-  
-
-+ mapper层
-
-  ```java
-  @Mapper
-  public interface AttachmentMapper {
-  
-      int insert(Attachment attachment);
-  
-      Attachment selectById(String id);
-  
-      int deleteById(String id);
-  }
-  
-  ```
-
-  ```xml
-  <?xml version="1.0" encoding="UTF-8" ?>
-  <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
-  <mapper namespace="com.ilovesshan.wjhs.mapper.AttachmentMapper">
-  
-      <sql id="allColumns">
-          `id`, `url`, `create_by_user_id`, `create_by_user_name`, `create_by_user_type`, `is_delete`, `create_time`, `update_time`
-      </sql>
-  
-  
-      <insert id="insert">
-          insert into
-              `wjhs`.`attachment` (`id`, `url`, `create_by_user_id`, `create_by_user_name`, `create_by_user_type`)
-          values
-              (#{id}, #{url}, #{createByUserId}, #{createByUserName}, #{createByUserType});
-      </insert>
-  
-  
-      <delete id="deleteById">
-          update  `wjhs`.`attachment` set is_delete = '14' where id = #{id};
-      </delete>
-  
-  
-      <select id="selectById" resultType="com.ilovesshan.wjhs.beans.pojo.Attachment">
-          select <include refid="allColumns" /> from `wjhs`.`attachment` where id = #{id} and is_delete = '15';
-      </select>
-  
-  </mapper>
-  ```
-
-  
-
-### 第六章、轮播图、公告管理模块
-
-#### 1、数据库脚本更新
-
-`V20221204.02__insert_system_dict_table.sql`
-
-```sql
--- 添加数据字典
-INSERT INTO
-  `wjhs`.`system_dict` (`id`, `dict_code`, `dict_name`, `dict_describe`, `sort`, `create_by`, `create_by_user_id`, `update_by`, `update_by_user_id`)
-VALUES
-  ('7B780A0BF5EB46248FB77D800AD7024D', 31, '终端类型(zdlx)', '小程序', 1 , 'admin', '369BCFE480454D22A07A8644F6DF0349', NULL, NULL),
-  ('B81A602284B44052AE1BE0D5EBBA9A2E', 32, '终端类型(zdlx)', 'App', 1 , 'admin', '369BCFE480454D22A07A8644F6DF0349', NULL, NULL);
+    public static void main(String[] args) {
+        SpringApplication.run(WjhsApplication.class, args);
+    }
+}
 ```
 
 
 
-`V20221204.03__update_swiper_and_notice_structure_table.sql`
+#### 5、`@Log`使用方法
 
-```sql
--- 更新轮播图表中 type字段备注说明
-alter table swiper modify `type` char(3)  NOT NULL COMMENT '类型(31:小程序端、32:App端)';
+```java
+@Log(businessModule = "用户模块", businessType = "UPDATE", businessDescribe = "更新用户信息")   
+public void update() {}
 
--- 更新公告栏表中 type字段备注说明
-alter table notice modify `type` char(3)  NOT NULL COMMENT '类型(31:小程序端、32:App端)';
+@Log(businessModule = "附件模块", businessType = "DELETE", businessDescribe = "根据ID删除附件")
+public void deleteById() {}
 ```
 
 
 
-#### 2、轮播图管理模块实现
+### 六、文件管理
 
-+ `PO、VO、DTO` 定义，请参考项目源码
+#### 1、配置虚拟路径
 
-+ controller层
+```java
+@Configuration
+public class WebMvcConfig implements WebMvcConfigurer {
 
-  ```java
-  @Api(tags = "轮播图模块")
-  @RestController
-  @RequestMapping("/swiper")
-  public class SwiperController {
-  
-      @Autowired
-      private SwiperService swiperService;
-  
-      @Autowired
-      private SwiperConverter swiperConverter;
-  
-      @Autowired
-      private AttachmentConverter attachmentConverter;
-  
-  
-      @ApiOperation("根据ID获取轮播图")
-      @GetMapping("/{id}")
-      public R selectById(@PathVariable String id) {
-          Swiper swiper = swiperService.selectById(id);
-          SwiperVo swiperVo = swiperConverter.po2vo(swiper);
-          swiperVo.setAttachment(attachmentConverter.po2vo(swiper.getAttachment()));
-          return R.success(R.SUCCESS_MESSAGE_SELECT, swiperVo);
-      }
-  
-  
-      @ApiOperation("获取轮播图")
-      @GetMapping
-      public R selectByConditions(@Validated SwiperSelectDto swiperSelectDto) {
-          List<Swiper> swipers = swiperService.selectByConditions(swiperSelectDto);
-          List<SwiperVo> swiperVos = swipers.stream().map(swiper -> {
-              SwiperVo swiperVo = swiperConverter.po2vo(swiper);
-              swiperVo.setAttachment(attachmentConverter.po2vo(swiper.getAttachment()));
-              return swiperVo;
-          }).collect(Collectors.toList());
-          return R.success(R.SUCCESS_MESSAGE_SELECT, swiperVos);
-      }
-  
-  
-      @ApiOperation("创建轮播图")
-      @PostMapping
-      public R create(@Validated @RequestBody SwiperCreateDto swiperCreateDto) {
-          boolean isSuccess = swiperService.create(swiperCreateDto);
-          return isSuccess ? R.success(R.SUCCESS_MESSAGE_INSERT) : R.fail(R.ERROR_MESSAGE_INSERT);
-      }
-  
-  
-      @ApiOperation("更新轮播图")
-      @PutMapping
-      public R update(@Validated @RequestBody SwiperUpdateDto swiperUpdateDto) {
-          boolean isSuccess = swiperService.update(swiperUpdateDto);
-          return isSuccess ? R.success(R.SUCCESS_MESSAGE_UPDATE) : R.fail(R.ERROR_MESSAGE_UPDATE);
-      }
-  
-      @ApiOperation("删除轮播图")
-      @DeleteMapping("/{id}")
-      public R deleteById(@PathVariable String id) {
-          boolean isSuccess = swiperService.deleteById(id);
-          return isSuccess ? R.success(R.SUCCESS_MESSAGE_DELETE) : R.fail(R.ERROR_MESSAGE_DELETE);
-      }
-  }
-  
-  ```
+    // 注入拦截器
+    // ...
 
-  
 
-+ service层
+    @Override
+    public void addResourceHandlers(ResourceHandlerRegistry registry) {
+        // 区分当前运行的系统环境
+        registry.addResourceHandler("/preview/**").addResourceLocations("file:" + (SystemUtil.isWindows() ? Constants.ATTACHMENT_UPLOAD_WINDOWS_DEST : Constants.ATTACHMENT_UPLOAD_LINUX_DEST));
+    }
 
-  ```java
-  public interface SwiperService {
-      boolean create(SwiperCreateDto swiperCreateDto);
-  
-      List<Swiper> selectByConditions(SwiperSelectDto swiperSelectDto);
-  
-      boolean update(SwiperUpdateDto swiperUpdateDto);
-  
-      boolean deleteById(String id);
-  
-      Swiper selectById(String id);
-  }
-  
-  ```
 
-  ```java
-  
-  @Service
-  public class SwiperServiceImpl implements SwiperService {
-  
-      @Autowired
-      private SwiperMapper swiperMapper;
-  
-      @Autowired
-      private SwiperConverter swiperConverter;
-  
-      @Override
-      public boolean create(SwiperCreateDto swiperCreateDto) {
-          Swiper swiper = swiperConverter.dto2po(swiperCreateDto);
-          swiper.setId(UuidUtil.generator());
-          return swiperMapper.insert(swiper) > 0;
-      }
-  
-      @Override
-      public List<Swiper> selectByConditions(SwiperSelectDto swiperSelectDto) {
-          return swiperMapper.selectByConditions(swiperSelectDto);
-      }
-  
-      @Override
-      public boolean update(SwiperUpdateDto swiperUpdateDto) {
-          Swiper finedSwiper = swiperMapper.selectById(swiperUpdateDto.getId());
-          if (Objects.isNull(finedSwiper)) {
-              throw new CustomException(R.ERROR_RESOURCES_NOTFOUND);
-          }
-          return swiperMapper.update(swiperConverter.dto2po(swiperUpdateDto)) > 0;
-      }
-  
-      @Override
-      public boolean deleteById(String id) {
-          Swiper finedSwiper = swiperMapper.selectById(id);
-          if (Objects.isNull(finedSwiper)) {
-              throw new CustomException(R.ERROR_RESOURCES_NOTFOUND);
-          }
-          return swiperMapper.delete(id) > 0;
-      }
-  
-      @Override
-      public Swiper selectById(String id) {
-          return swiperMapper.selectById(id);
-      }
-  }
-  
-  ```
+    @Override
+    public void addInterceptors(InterceptorRegistry registry) {
+        // ...
+    }
+}
+```
 
-  
 
-+ mapper层
 
-  ```java
-  @Mapper
-  public interface SwiperMapper {
-  
-      Swiper selectById(String id);
-  
-      int insert(Swiper dto2po);
-  
-      List<Swiper> selectByConditions(SwiperSelectDto swiperSelectDto);
-  
-      int update(Swiper dto2po);
-  
-      int delete(String id);
-  }
-  
-  ```
+#### 2、文件上传controller层
 
-  
+```java
+@Api(tags = "附件模块")
+@RestController
+@RequestMapping("attachments")
+public class AttachmentController {
 
-  ```xml
-  <?xml version="1.0" encoding="UTF-8" ?>
-  <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
-  <mapper namespace="com.ilovesshan.wjhs.mapper.SwiperMapper">
-  
-      <sql id="allColumns">
-          `id`, `type`, `attachment_id`, `title`, `sub_title`, `detail`, `link`, `is_delete`, `create_time`, `update_time`
-      </sql>
-  
-  
-      <insert id="insert">
-          insert into
-              `wjhs`.`swiper` (`id`, `type`, `attachment_id`, `title`, `sub_title`, `detail`, `link`)
-          values
-              (#{id}, #{type}, #{attachmentId}, #{title}, #{subTitle}, #{detail}, #{link});
-      </insert>
-  
-  
-  
-      <resultMap id="swiperMap" type="com.ilovesshan.wjhs.beans.pojo.Swiper" autoMapping="true">
-          <association property="attachment" javaType="com.ilovesshan.wjhs.beans.pojo.Attachment" autoMapping="true">
-              <id column="a_id" property="id"/>
-          </association>
-      </resultMap>
-  
-      <select id="selectByConditions" resultMap="swiperMap">
-          select
-              s.id, s.type, s.attachment_id, s.title, s.detail, s.link, s.sub_title, s.is_delete, s.create_time, s.update_time,
-              a.id a_id , a.url, a.create_by_user_id, a.create_by_user_name, a.create_by_user_type, a.is_delete, a.create_time, a.update_time
-          from
-              swiper s left join attachment a on s.attachment_id = a.id
-          <where>
-              <if test="title !=null and title != '' ">
-                  (s.title like concat('%',#{title},'%') or s.sub_title like concat('%',#{title},'%') or s.detail like concat('%',#{title},'%'))
-              </if>
-              <if test="beginTime !=null and endTime !=null">
-                  and (s.create_time between #{beginTime} and #{endTime})
-              </if>
-              and s.type = #{type} and s.is_delete = '15' and a.is_delete = '15';
-          </where>
-      </select>
-  
-      <select id="selectById" resultMap="swiperMap">
-          select
-              s.id, s.type, s.attachment_id, s.title, s.detail, s.link, s.sub_title, s.is_delete, s.create_time, s.update_time,
-              a.id a_id , a.url, a.create_by_user_id, a.create_by_user_name, a.create_by_user_type, a.is_delete, a.create_time, a.update_time
-          from
-              swiper s left join attachment a on s.attachment_id = a.id
-          where
-              s.id = #{id} and s.is_delete = '15' and a.is_delete = '15';
-      </select>
-  
-      <update id="update">
-          update
-              `wjhs`.`swiper`
-          <set>
-              <if test="type != null and type != '' ">
-                  `type` = #{type},
-              </if>
-              <if test="attachmentId != null and attachmentId != '' ">
-                  `attachment_id` = #{attachmentId},
-              </if>
-              <if test="title != null and title != '' ">
-                  `title` = #{title},
-              </if>
-              <if test="subTitle != null and subTitle != '' ">
-                  `sub_title` = #{subTitle},
-              </if>
-              <if test="detail != null and detail != '' ">
-                  `detail` = #{detail},
-              </if>
-              <if test="link != null and link != '' ">
-                  `link` = #{link},
-              </if>
-          </set>
-          where (`id` = #{id});
-      </update>
-  
-  
-  
-      <delete id="delete">
-          update  `wjhs`.`swiper` set is_delete = '14' where id = #{id};
-      </delete>
-  
-  
-  </mapper>
-  ```
+    @Autowired
+    private AttachmentService attachmentService;
 
-  
+    @Autowired
+    private AttachmentConverter attachmentConverter;
 
-#### 3、公告管理模块实现
+    @ApiOperation("上传附件")
+    @PostMapping
+    @Log(businessModule = "附件模块", businessType = "POST", businessDescribe = "上传附件")
+    public R upload(@RequestParam("file") MultipartFile file) {
+        String attachmentId = attachmentService.upload(file);
+        Attachment attachment = attachmentService.selectById(attachmentId);
+        return R.success(R.SUCCESS_ATTACHMENT_UPLOAD, attachmentConverter.po2vo(attachment));
+    }
 
-+ `PO、VO、DTO` 定义，请参考项目源码
 
-  
+    @ApiOperation("根据ID查询附件")
+    @GetMapping("/{id}")
+    public R select(@PathVariable String id) {
+        Attachment attachment = attachmentService.selectById(id);
+        return R.success(R.SUCCESS_MESSAGE_SELECT, attachmentConverter.po2vo(attachment));
+    }
 
-+ controller层
 
-  ```java
-  @Api(tags = "公告模块")
-  @RestController
-  @RequestMapping("notice")
-  public class NoticeController {
-  
-      @Autowired
-      private NoticeService noticeService;
-  
-      @Autowired
-      private NoticeConverter noticeConverter;
-  
-      @GetMapping("/{id}")
-      @ApiOperation("根据ID查询公告")
-      public R selectById(@PathVariable String id) {
-          Notice notice = noticeService.selectById(id);
-          return R.success(R.SUCCESS_MESSAGE_SELECT, noticeConverter.po2vo(notice));
-      }
-  
-  
-      @GetMapping
-      @ApiOperation("查询公告")
-      public R selectByConditions(@Validated NoticeSelectDto noticeSelectDto) {
-          List<Notice> notices = noticeService.selectByConditions(noticeSelectDto);
-          List<NoticeVo> noticesVos = notices.stream().map(noticeConverter::po2vo).collect(Collectors.toList());
-          return R.success(R.SUCCESS_MESSAGE_SELECT, noticesVos);
-      }
-  
-  
-      @PostMapping
-      @ApiOperation("创建公告")
-      public R create(@Validated @RequestBody NoticeCreateDto noticeCreateDto) {
-          boolean isSuccess = noticeService.create(noticeCreateDto);
-          return isSuccess ? R.success(R.SUCCESS_MESSAGE_INSERT) : R.fail(R.ERROR_MESSAGE_INSERT);
-      }
-  
-  
-      @PutMapping
-      @ApiOperation("更新公告")
-      public R update(@Validated @RequestBody NoticeUpdateDto noticeUpdateDto) {
-          boolean isSuccess = noticeService.update(noticeUpdateDto);
-          return isSuccess ? R.success(R.SUCCESS_MESSAGE_UPDATE) : R.fail(R.ERROR_MESSAGE_UPDATE);
-      }
-  
-  
-      @DeleteMapping("/{id}")
-      @ApiOperation("根据ID查询公告")
-      public R deleteById(@PathVariable String id) {
-          boolean isSuccess = noticeService.deleteById(id);
-          return isSuccess ? R.success(R.SUCCESS_MESSAGE_DELETE) : R.fail(R.ERROR_MESSAGE_DELETE);
-      }
-  }
-  
-  ```
+    @Log(businessModule = "附件模块", businessType = "DELETE", businessDescribe = "根据ID删除附件")
+    @ApiOperation("根据ID删除附件")
+    @DeleteMapping("/{id}")
+    public R deleteById(@PathVariable String id) {
+        attachmentService.deleteById(id);
+        return R.success(R.SUCCESS_MESSAGE_DELETE);
+    }
+}
+```
 
-  
 
-+ service层
 
-  ```java
-  public interface NoticeService {
-      List<Notice> selectByConditions(NoticeSelectDto noticeSelectDto);
-  
-      boolean create(NoticeCreateDto noticeCreateDto);
-  
-      boolean update(NoticeUpdateDto noticeUpdateDto);
-  
-      boolean deleteById(String id);
-  
-      Notice selectById(String id);
-  }
-  ```
+#### 3、文件上传Service层
 
-  ```java
-  @Service
-  public class NoticeServiceImpl implements NoticeService {
-  
-      @Autowired
-      private NoticeMapper noticeMapper;
-  
-      @Autowired
-      private NoticeConverter noticeConverter;
-  
-  
-      @Override
-      public List<Notice> selectByConditions(NoticeSelectDto noticeSelectDto) {
-          return noticeMapper.selectByConditions(noticeSelectDto);
-      }
-  
-      @Override
-      public boolean create(NoticeCreateDto noticeCreateDto) {
-          Notice notice = noticeConverter.dto2po(noticeCreateDto);
-          notice.setId(UuidUtil.generator());
-          return noticeMapper.insert(notice) > 0;
-      }
-  
-  
-      @Override
-      public boolean update(NoticeUpdateDto noticeUpdateDto) {
-          Notice finedNotice = noticeMapper.selectById(noticeUpdateDto.getId());
-          if (Objects.isNull(finedNotice)) {
-              throw new CustomException(R.ERROR_RESOURCES_NOTFOUND);
-          }
-          return noticeMapper.update(noticeConverter.dto2po(noticeUpdateDto)) > 0;
-      }
-  
-  
-      @Override
-      public boolean deleteById(String id) {
-          Notice finedNotice = noticeMapper.selectById(id);
-          if (Objects.isNull(finedNotice)) {
-              throw new CustomException(R.ERROR_RESOURCES_NOTFOUND);
-          }
-          return noticeMapper.deleteById(id) > 0;
-      }
-  
-      @Override
-      public Notice selectById(String id) {
-          return noticeMapper.selectById(id);
-      }
-  }
-  
-  ```
+```java
+public interface AttachmentService {
+    String upload(MultipartFile multipartFile);
 
-  
+    boolean saveAttachment(Attachment attachment);
 
-+ mapper层
+    Attachment selectById(String id);
 
-  ```java
-  @Mapper
-  public interface NoticeMapper {
-      List<Notice> selectByConditions(NoticeSelectDto noticeSelectDto);
-  
-      int insert(Notice notice);
-  
-      Notice selectById(String id);
-  
-      int update(Notice notice);
-  
-      int deleteById(String id);
-  }
-  
-  ```
+    boolean deleteById(String id);
+}
+```
 
-  ```xml
-  <?xml version="1.0" encoding="UTF-8" ?>
-  <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
-  <mapper namespace="com.ilovesshan.wjhs.mapper.NoticeMapper">
-  
-      <sql id="allColumns">
-          `id`, `type`, `title`, `sub_title`, `detail`, `link`, `is_delete`, `create_time`, `update_time`
-      </sql>
-  
-      <select id="selectByConditions" resultType="com.ilovesshan.wjhs.beans.pojo.Notice">
-          select
-              <include refid="allColumns" />
-          from  `wjhs`.`notice`
-          <where>
-              <if test="title !=null and title != '' ">
-                  title like concat('%',#{title},'%') or sub_title like concat('%',#{title},'%')
-              </if>
-              <if test="detail !=null and detail != '' ">
-                  and detail like concat('%',#{detail},'%')
-              </if>
-              <if test="beginTime !=null and endTime !=null">
-                  and (create_time between #{beginTime} and #{endTime})
-              </if>
-              and `type` = #{type} and is_delete = '15'
-          </where>
-      </select>
-  
-  
-      <insert id="insert">
-          insert into
-              `wjhs`.`notice` (`id`, `type`, `title`, `sub_title`, `detail`, `link`)
-          values
-              (#{id}, #{type}, #{title}, #{subTitle}, #{detail}, #{link});
-      </insert>
-  
-  
-      <update id="update">
-          update
-              `wjhs`.`notice`
-          set
-              <if test="type != null and type != '' ">
-                  `type` = #{type},
-              </if>
-              <if test="title != null and title != '' ">
-                  `title` = #{title},
-              </if>
-              <if test="subTitle != null and subTitle != '' ">
-                  `sub_title` = #{subTitle},
-              </if>
-              <if test="detail != null and detail != '' ">
-                  `detail` = #{detail},
-              </if>
-              <if test="link != null and link != '' ">
-                  `link` = #{link}
-              </if>
-          where (`id` = #{id});
-      </update>
-  
-  
-      <delete id="deleteById">
-          update `wjhs`.`notice` set is_delete = '14' where id = #{id};
-      </delete>
-  
-  
-      <select id="selectById" resultType="com.ilovesshan.wjhs.beans.pojo.Notice">
-          select <include refid="allColumns" /> from  `wjhs`.`notice` where id = #{id} and is_delete = '15';
-      </select>
-  
-  </mapper>
-  ```
+```java
+@Service
+@Slf4j
+public class AttachmentServiceImpl implements AttachmentService {
 
-  
+    @Autowired
+    private AttachmentMapper attachmentMapper;
+
+    @Override
+    public String upload(MultipartFile multipartFile) {
+        // 区分当前运行的系统环境
+        File fileDir = new File(SystemUtil.isWindows() ? Constants.ATTACHMENT_UPLOAD_WINDOWS_DEST : Constants.ATTACHMENT_UPLOAD_LINUX_DEST);
+
+        if (!fileDir.exists()) {
+            fileDir.mkdirs();
+        }
+        // 获取文件扩展名
+        String ext = multipartFile.getOriginalFilename().substring(multipartFile.getOriginalFilename().lastIndexOf("."));
+
+        // 文件名称
+        String fileName = UuidUtil.generator() + ext;
+
+        try {
+            multipartFile.transferTo(new File(fileDir + File.separator + fileName));
+        } catch (IOException e) {
+            e.printStackTrace();
+            throw new CustomException(R.ERROR_ATTACHMENT_UPLOAD);
+        }
+
+        // 组装一个Attachment对象 新增到数据库
+        Attachment attachment = new Attachment();
+        attachment.setId(UuidUtil.generator());
+        attachment.setUrl(Constants.FILE_PREVIEW_PREFIX + fileName);
+        attachment.setCreateByUserId(UserCache.get("userId"));
+        attachment.setCreateByUserName(UserCache.get("username"));
+        attachment.setCreateByUserType(UserCache.get("userType"));
+        saveAttachment(attachment);
+        return attachment.getId();
+    }
+
+
+    @Override
+    public boolean saveAttachment(Attachment attachment) {
+        return attachmentMapper.insert(attachment) > 0;
+    }
+
+    @Override
+    public Attachment selectById(String id) {
+        return attachmentMapper.selectById(id);
+    }
+
+    @Override
+    public boolean deleteById(String id) {
+        Attachment finedAttachment = selectById(id);
+        if (Objects.isNull(finedAttachment)) {
+            throw new CustomException(R.ERROR_ATTACHMENT_NOTFOUND);
+        }
+
+        String filePath = (SystemUtil.isWindows() ? Constants.ATTACHMENT_UPLOAD_WINDOWS_DEST : Constants.ATTACHMENT_UPLOAD_LINUX_DEST) + finedAttachment.getUrl();
+        // 删除本地文件  替换掉 "//preview" 预览前缀
+        boolean deleteSuccess = new File(filePath.replace("//preview", "")).delete();
+        if (deleteSuccess) {
+            // 删除数据库文件
+            return attachmentMapper.deleteById(id) > 0;
+        } else {
+            throw new CustomException(R.ERROR_MESSAGE_DELETE);
+        }
+    }
+}
+```
 
