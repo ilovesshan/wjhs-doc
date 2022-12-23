@@ -5,29 +5,31 @@
 #### 1、数据表预览
 
 ```
--- 系统字典表
--- 用户操作日志表
--- 用户登录日志表
--- 小程序用户信息表
--- 小程序用户地址信息表
--- 小程序用户信息和地址信息关联表
--- 骑手/回收中心/平台用户表
--- 角色表
--- 用户角色关联表
--- 权限表
--- 角色权限关联表
--- 附件表
--- 轮播图表
--- 公告栏表
--- 回收商品分类表
--- 回收商品表
--- 回收商品订单表
--- 回收商品订单详情表
--- 积分商品分类表
--- 积分商品表
--- 积分商品表订单表
--- 账户表
--- 账户流水表
+-- 系统字典表 system_dict
+-- 用户操作日志表 operation_log
+-- 用户登录日志表 login_log
+-- 小程序用户信息表 wx_user
+-- 小程序用户地址信息表 adress
+-- 小程序用户信息和地址信息关联表 wx_user_address_rel
+-- 骑手/回收中心/平台用户表 user
+-- 角色表 role
+-- 用户角色关联表 user_role
+-- 权限表 menu 
+-- 角色权限关联表 role_menu
+-- 附件表 attachment
+-- 轮播图表 swiper
+-- 公告栏表 notice
+-- 回收商品分类表 recycle_goods_type
+-- 回收商品表 recycle_goods
+-- 回收商品订单表 recycle_order
+-- 回收商品订单详情表 recycle_order_detail
+-- 积分商品分类表 integral_goods_type
+-- 积分商品表 integral_goods
+-- 积分商品表订单表 integral_order
+-- 账户表 account
+-- 账户流水表 account_record
+-- 回收统计表 recycle_statistical
+-- 用户积分表 wx_integral
 
 -- 省份表
 -- 市、区表
@@ -549,6 +551,10 @@ CREATE TABLE `account_record`  (
 商品状态(spzt)
 33：上架
 34：下架
+
+出入账状态(crzzt)
+35：支出
+36：收入
 ```
 
 
