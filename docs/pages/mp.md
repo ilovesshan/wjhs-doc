@@ -1,111 +1,6 @@
 ## 小程序开发文档
 
-### 一、环境搭建
-
-小程序官方文档：https://developers.weixin.qq.com/miniprogram/dev/framework/
-
-#### 1、注册账号
-
-在微信公众平台注册一个开发账号，地址：https://mp.weixin.qq.com/
-
-#### 2、开发工具下载
-
-https://developers.weixin.qq.com/miniprogram/dev/devtools/download.html
-
-### 二、项目初始化
-
-#### 1、创建项目
-
-+ 在微信开发工具中填入项目名称、目录、appID等信息。
-+ 开发模式选择：小程序。
-+ 后端服务：不使用云服务。
-+ 模板选择：Typescript基础模板，然后创建即可。
-
-#### 2、集成Vant Weapp UI库
-
-Vant 是一个轻量、可靠的移动端组件库，于 2017 年开源。官网地址：https://vant-contrib.gitee.io/vant-weapp/#/home
-
-目前 Vant 官方提供了 [Vue 2 版本](https://vant-contrib.gitee.io/vant/v2)、[Vue 3 版本](https://vant-contrib.gitee.io/vant)和[微信小程序版本](http://vant-contrib.gitee.io/vant-weapp)，并由社区团队维护 [React 版本](https://github.com/3lang3/react-vant)和[支付宝小程序版本](https://github.com/ant-move/Vant-Aliapp)
-
-+ 具体的安装步骤也可以参考官方文档：https://vant-contrib.gitee.io/vant-weapp/#/quickstart
-
-  ```
-  # 通过 npm 安装
-  npm i @vant/weapp -S --production
-  
-  # 通过 yarn 安装
-  yarn add @vant/weapp --production
-  
-  # 安装 0.x 版本
-  npm i vant-weapp -S --production
-  
-  ```
-
-  
-
-+ 修改 app.json
-
-  将 app.json 中的 `"style": "v2"` 去除，小程序的[新版基础组件](https://developers.weixin.qq.com/miniprogram/dev/reference/configuration/app.html#style)强行加上了许多样式，难以覆盖，不关闭将造成部分组件样式混乱。
-
-+ 修改 project.config.json
-
-  ```json
-  {
-    ...
-    "setting": {
-      ...
-      "packNpmManually": true,
-      "packNpmRelationList": [
-        {
-          "packageJsonPath": "./package.json",
-          "miniprogramNpmDistDir": "./miniprogram/"
-        }
-      ]
-    }
-  }
-  
-  ```
-
-  
-
-+ 构建 npm 包
-
-  打开微信开发者工具，点击 工具 -> 构建 npm，并勾选 使用 npm 模块 选项，构建完成后，即可引入组件。
-
-  
-
-+ typescript 支持
-
-  ```
-  # 通过 npm 安装
-  npm i -D miniprogram-api-typings
-  
-  # 通过 yarn 安装
-  yarn add -D miniprogram-api-typings
-  ```
-
-+ 在 tsconfig.json 中增加如下配置，以防止 tsc 编译报错。
-
-  请将`path/to/node_modules/@vant/weapp`修改为项目的 `node_modules` 中 @vant/weapp 所在的目录。
-
-  ```json
-  {
-    ...
-    "compilerOptions": {
-      ...
-      "baseUrl": ".",
-      "types": ["miniprogram-api-typings"],
-      "paths": {
-        "@vant/weapp/*": ["node_modules/@vant/weapp/dist/*"]
-      },
-      "lib": ["ES6"]
-    }
-  }
-  ```
-
-
-
-#### 3、tabbar搭建
+### 一、TabBar
 
 ```json
 {
@@ -163,9 +58,51 @@ Vant 是一个轻量、可靠的移动端组件库，于 2017 年开源。官网
 
 
 
+### 二、公共webview
+
+```html
+<web-view src="{{ pagePath }}"></web-view>
+```
+
+```typescript
+Page({
+  data: {
+    // 页面跳转路径
+    pagePath: "",
+    // 页面标题
+    pageTitle: "",
+  },
+
+  onLoad(options) {
+    const { pagePath, pageTitle} = options;
+    if (options && pagePath) {
+      this.setData({
+        pagePath,
+        pageTitle,
+      });
+    };
+    if (pageTitle) {
+      wx.setNavigationBarTitle({
+        title: pageTitle,
+      });
+    }
+  }
+})
+```
+
+```typescript
+wx.navigateTo({
+    url: `/components/webView/webView?pageTitle=${pageTitle}&pagePath=${pagePath}`,
+});
+```
+
+
+
+
+
 ### 三、工具类
 
-#### 1、封装本地存储工具
+#### 1、本地存储
 
 ```typescript
 class Cache {
@@ -196,7 +133,7 @@ export default new Cache()
 
 
 
-#### 2、封装网络请求库
+#### 2、网络请求库
 
 ```typescript
 import Cache from "../utils/cache"
@@ -279,42 +216,108 @@ export {
 
 
 
-#### 3、公共webview
-
-```html
-<web-view src="{{ pagePath }}"></web-view>
-```
+#### 3、地址转换
 
 ```typescript
-Page({
-  data: {
-    // 页面跳转路径
-    pagePath: "",
-    // 页面标题
-    pageTitle: "",
-  },
+// 通过地址获取经纬度信息
+export function getlocationByAddress(address: string): Promise<{ lat: number, lng: number }> {
+    return new Promise((resovle, reject) => {
+        wx.request({
+            url: `https://apis.map.qq.com/ws/geocoder/v1/?address=${address}&key=******`,
+            success: async (res: { statusCode: number, data: { status: number, result: any } }) => {
+                if (res.statusCode == 200 && res.data.status == 0) {
+                    resovle(res.data.result.location);
+                }
+            },
+            fail(err) {
+                wx.showToast({ title: "抱歉不能识别的地址，您也可以更换地址或者联系联系客服", icon: "none" });
+                reject(err);
+            }
+        });
+    })
+}
 
-  onLoad(options) {
-    const { pagePath, pageTitle} = options;
-    if (options && pagePath) {
-      this.setData({
-        pagePath,
-        pageTitle,
-      });
-    };
-    if (pageTitle) {
-      wx.setNavigationBarTitle({
-        title: pageTitle,
-      });
-    }
-  }
-})
+
+// 省市区详细地址 逆向解析 
+// 四川省巴中市平昌县西兴职业中学 => [四川省, 巴中市, 平昌县, 西兴职业中学] 
+// 四川省成都市锦江区春熙路太古里 => [四川省, 成都市, 锦江区, 春熙路太古里] 
+export function parseAddress(address: string, name: string): Array<String> {
+    const provinceIndex = address.indexOf("省") + 1;
+    const cityIndex = address.indexOf("市") + 1;
+    const areaIndex = address.indexOf("县") + 1 || address.indexOf("区") + 1;
+
+    const province = address.substring(0, provinceIndex);
+    const city = address.substring(provinceIndex, cityIndex);
+    const area = address.substring(cityIndex, areaIndex);
+    const detailAddress = address.substring(areaIndex) + name;
+
+    return [province, city, area, detailAddress];
+}
 ```
 
+
+
+#### 4、时间转换
+
 ```typescript
-wx.navigateTo({
-    url: `/components/webView/webView?pageTitle=${pageTitle}&pagePath=${pagePath}`,
-});
+export const formatTime = (date: Date) => {
+    const year = date.getFullYear()
+    const month = date.getMonth() + 1
+    const day = date.getDate()
+    const hour = date.getHours()
+    const minute = date.getMinutes()
+    const second = date.getSeconds()
+
+    return (
+        [year, month, day].map(formatNumber).join('-') +
+        ' ' +
+        [hour, minute, second].map(formatNumber).join(':')
+    )
+}
+
+const formatNumber = (n: number) => {
+    const s = n.toString()
+    return s[1] ? s : '0' + s
+}
+```
+
+
+
+#### 5、Loading和Toast
+
+```typescript
+const showToast = function (content: string, duration: number): void {
+    if (!duration) duration = 2000
+    wx.showToast({
+        title: content,
+        icon: 'none',
+        duration: duration,
+    })
+}
+
+var isShowLoading: boolean = false
+const showLoading = function (title: string): void {
+    if (isShowLoading) return
+    wx.showLoading({
+        title: title ? title : '',
+        mask: true,
+        success: () => {
+            isShowLoading = true
+        }
+    })
+}
+
+const hideLoading = function (): void {
+    if (!isShowLoading) return
+    isShowLoading = false
+    wx.hideLoading()
+}
+
+module.exports = {
+    showToast,
+    showLoading,
+    hideLoading
+}
 ```
 
 
@@ -323,7 +326,7 @@ wx.navigateTo({
 
 + 实现思路：
 
-  通过调用`wx.login()` 获取到code之后，携带code带后端服务器进行校验，校验成功后端会返回`openID、sessionKey、skey` 等信息，同时也会返回当前用户的ID，可以通过ID去获取用户的一些基本信息，客户端保存`openID`，之后请求是都携带上即可。
+  通过调用`wx.login()` 获取到code之后，携带code带后端服务器进行校验，校验成功后端会返回`openId、sessionKey、userId` 等信息，可以通过`userId`或者`openId`去获取用户的一些基本信息，客户端保存`openId`，之后请求是都携带上即可（具体步骤得看业务逻辑）。
 
 ```json
 {
@@ -356,45 +359,44 @@ import { requestOpenId, requestSystemDict, requestUserInfo } from "../../api/api
 import Cache from "../../utils/cache";
 
 Page({
-  data: {
-    isLoading: false,
-  },
-  onLoad() {
-    this.tologin();
-  },
+    data: {
+        isLoading: false,
+    },
+    onLoad() {
+        this.tologin();
+    },
 
-  tologin() {
-    this.setData({ isloading: true })
-    // 登录
-    wx.login({
-      success: response => {
-        console.log(response.code)
-        requestOpenId(response.code).then(res => {
-          if (res.code === 200) {
-            Cache.set("userId", res.data.id);
-            Cache.set("openId", res.data.openId);
+    tologin() {
+        this.setData({ isloading: true })
+        // 登录
+        wx.login({
+            success: response => {
+                console.log(response.code)
+                requestOpenId(response.code).then(res => {
+                    if (res.code === 200) {
+                        Cache.set("userId", res.data.id);
+                        Cache.set("openId", res.data.openId);
 
-            // 获取用户信息
-            requestUserInfo(res.data.id).then(res => {
-              Cache.set("userInfo", res.data);
-            })
+                        // 获取用户信息
+                        requestUserInfo(res.data.id).then(res => {
+                            Cache.set("userInfo", res.data);
+                        })
 
-            // 获取数据字典
-            requestSystemDict().then(res => {
-              Cache.set("systemDict", res.data);
-            })
-            
-            // 跳到首页
-            wx.switchTab({
-              url: "/pages/home/home",
-            })
-          }
-        }, _ => {
-          this.setData({ isloading: false })
+                        // 获取数据字典
+                        requestSystemDict().then(res => {
+                            Cache.set("systemDict", res.data);
+                        })
+
+                        // 跳到首页
+                        wx.switchTab({
+                            url: "/pages/home/home",
+                        })
+                    }
+                }, _ => {
+                    this.setData({ isloading: false })
+                })
+            },
         })
-      },
-    })
-  }
+    }
 })
 ```
-

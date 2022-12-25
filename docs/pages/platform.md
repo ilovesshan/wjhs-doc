@@ -1,72 +1,7 @@
 ## 平台端开发文档
 
-### 一、前端环境搭建
 
-#### 1、安装Node.js
-
-+ 官网地址：https://nodejs.org/en/。
-
-  
-
-#### 2、vue-cil 搭建 vue3 开发环境
-
-+ 安装：vue-cli
-
-  ```
-  npm install -g @vue/cli
-  ```
-  
-+ 查看vue版本
-
-  ```
-  vue --version
-  ```
-  
-+ 创建vue项目
-
-  ```
-  vue create 项目名
-  ```
-
-
-
-#### 3、使用vite创建项目
-
-+ vite官网地址：https://cn.vitejs.dev/
-
-+ 搭建第一个 Vite 项目。
-
-  ```
-  # 使用 NPM:
-  npm create vite@latest
-  
-  # 使用 Yarn:
-  yarn create vite
-  
-  # 使用 PNPM:
-  pnpm create vite
-  ```
-
-  你还可以通过附加的命令行选项直接指定项目名称和你想要使用的模板。例如，要构建一个 Vite + Vue 项目，运行:
-
-  ```
-  # npm 6.x
-  npm create vite@latest my-vue-app --template vue
-  
-  # npm 7+, extra double-dash is needed:
-  npm create vite@latest my-vue-app -- --template vue
-  
-  # yarn
-  yarn create vite my-vue-app --template vue
-  
-  # pnpm
-  pnpm create vite my-vue-app --template vue
-  ```
-
-  
-
-
-### 二、项目初始化
+### 一、项目初始化
 
 #### 1、集成 vue-router
 
@@ -245,7 +180,7 @@
 
   
 
-### 三、工具类
+### 二、工具类
 
 #### 1、深拷贝
 
@@ -257,7 +192,7 @@ export function deepClone<T>(data: object): T {
 
 
 
-#### 2、cache封装
+#### 2、本地存储
 
 ```typescript
 enum CacheType {
@@ -304,7 +239,31 @@ export { LCache, SCache }
 
 
 
-#### 3、axios封装
+#### 3、网络请求
+
+```typescript
+interface IServiceConfig {
+  devProxyBaseUrl: string,
+  devBaseUrl: string,
+  devTimeout: number,
+
+  prodProxyBaseUrl: string,
+  prodBaseUrl: string,
+  prodTimeout: number,
+}
+
+const ServiceConfig: IServiceConfig = {
+  devProxyBaseUrl: "/api/wjhs",
+  devBaseUrl: "http://localhost:80",
+  devTimeout: 15000,
+
+  prodProxyBaseUrl: "/api/wjhs",
+  prodBaseUrl: "https://ilovesshan/wjhs",
+  prodTimeout: 5000,
+}
+
+export default ServiceConfig;
+```
 
 ```typescript
 import axios from "axios"
@@ -385,7 +344,7 @@ export default request;
 
 
 
-### 四、路由和Layout布局
+### 三、路由和Layout布局
 
 #### 1、404页面
 
