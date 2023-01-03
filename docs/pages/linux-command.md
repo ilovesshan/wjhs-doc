@@ -83,6 +83,7 @@ systemctl status firewalld
 ```
 
 
+
 #### 2、使用firewall-cmd配置端口
 
 ```shell
@@ -248,7 +249,179 @@ firewall-cmd --zone=public --remove-port=8080/tcp --permanent
 
 #### 4、安装mysql
 
++ 查看是否已经安装 `mysql`
 
+  ```shell
+  rpm -qa | grep mysql
+  ```
+
+  
+
++ 查看是否安装 `mariadb` ，如果存在就需要卸载(和`mysql`冲突)
+
+  ```shell
+  rpm -qa | grep mariadb
+  
+  # -e 表示卸载，也就是 erase 的首字母。
+  # --nodeps 忽略依赖 表示强制卸载
+  rpm -e --nodeps mariadb-libs-5.5.41-2.el7_0.x86_64
+  ```
+
++ 通过 `wget`安装 `mysql`或者通过`ftp`工具上传
+
+  ```shell
+  # 下载mysql
+  wget https://dev.mysql.com/get/Downloads/MySQL-8.0/mysql-8.0.31-1.el7.x86_64.rpm-bundle.tar
+  
+  
+  # 创建mysql文件夹，并解压mysql
+  mkdir mysql
+  cd mysql
+  tar -xvf ../mysql-8.0.31-1.el7.x86_64.rpm-bundle.tar 
+  ```
+
+  
+
++ 顺序安装`rpm`安装包（一定要按顺序执行安装！）
+
+  安装 `mysql-community-server` 时需要依赖 `net-tools`工具
+
+  ```shell
+  yum -y install net-tools
+  ```
+
+  ```shell
+  rpm -ivh ./mysql-community-common-8.0.31-1.el7.x86_64.rpm
+  
+  rpm -ivh ./mysql-community-client-plugins-8.0.31-1.el7.x86_64.rpm
+  
+  rpm -ivh ./mysql-community-libs-8.0.31-1.el7.x86_64.rpm 
+  
+  rpm -ivh ./mysql-community-devel-8.0.31-1.el7.x86_64.rpm 
+  
+  rpm -ivh ./mysql-community-libs-compat-8.0.31-1.el7.x86_64.rpm 
+  
+  rpm -ivh ./mysql-community-client-8.0.31-1.el7.x86_64.rpm
+  
+  rpm -ivh ./mysql-community-icu-data-files-8.0.31-1.el7.x86_64.rpm 
+  
+  rpm -ivh ./mysql-community-server-8.0.31-1.el7.x86_64.rpm
+  ```
+
+  
+
++ 启动 `mysql`服务
+
+  `mysql`安装完成之后，会自动注册为系统的服务，服务名为mysqld
+
+  ```shell
+  # 查看mysql服务状态
+  systemctl status mysqld
+  
+  # 启动mysql服务
+  systemctl start mysqld	
+  
+  # 停止mysql服务
+  systemctl stop mysqld
+  
+  # 设置开机时启动mysql服务，避免每次开机启动mysql
+  systemctl enable mysqld
+  ```
+
+  
+
++ 登录  `mysql`
+
+  查看mysql默认密码
+
+  ```shell
+  cat /var/log/mysqld.log | grep password
+  ```
+
+  
+
+  登录`mysql`并修改密码
+
+  ```mysql
+  # 登录mysql
+  mysql -p root -p RGEkxsN==5at
+  
+  # 进来之后执行其他命令会报错，系统会提示：需要先设置新密码才能执行其他操作，先将密码改成root
+  # 如果是8.x会报错 ERROR 1819 (HY000): Your password does not satisfy the current policy requirements
+  alter user 'root'@'localhost' Identified BY 'root';
+  
+  # 决绝方案：临时更换一个密码强度较高的字符串
+  # mysql密码长度默认是8，最少需要8位
+  # mysql密码策略是MEDIUM， 表示验证长度、数字、大小写、特殊字符
+  alter user 'root'@'localhost' Identified BY 'Root123456!';
+  
+  # 查看 mysql 初始的密码策略 可以参考https://developer.aliyun.com/article/811640
+  show variables like 'validate_password%';
+  +--------------------------------------+-------+
+  | Variable_name                        | Value |
+  +--------------------------------------+-------+
+  | validate_password.check_user_name    | ON    |
+  | validate_password.dictionary_file    |       |
+  | validate_password.length             | 8     |
+  | validate_password.mixed_case_count   | 1     |
+  | validate_password.number_count       | 1     |
+  | validate_password.policy             | MEDIUM|
+  | validate_password.special_char_count | 1     |
+  +--------------------------------------+-------+
+  
+  
+  # 修改策略(0表示LOW)
+  set global validate_password_policy = 0
+  
+  # 修改密码长度
+  set global validate_password_length = 4;
+  
+  # 修改了策略和密码长度之后，可以再次修改密码
+  alter user 'root'@'localhost' Identified BY 'root';
+  
+  # 退出在重新登录就ok了
+  ```
+
+  
+
++ `redis` 服务开启外网访问
+
+  ```shell
+  firewall-cmd --zone=public --add-port=3306/tcp --permanent
+  firewall-cmd --reload
+  ```
+
++ 用户和权限管理 参考：https://blog.csdn.net/lu1171901273/article/details/91635417
+
+  新建用户
+
+  ```mysql
+  # CREATE USER 'username'@'host' IDENTIFIED BY 'password';
+  
+  CREATE USER 'ilovesshan'@'%' IDENTIFIED BY '123456';
+  ```
+
+  授权
+
+  ```mysql
+  # GRANT privileges ON databasename.tablename TO 'username'@'host'
+  GRANT SELECT on wjhs.* TO 'ilovesshan'@'%';
+  ```
+
+  撤销权限
+
+  ```mysql
+  # REVOKE privilege ON databasename.tablename FROM 'username'@'host';
+  REVOKE SELECT on wjhs.* FROM 'ilovesshan'@'%';
+  ```
+
+  刷新权限(每次修改都需要重新刷新权限)
+
+  ```mysql
+  flush privileges;
+  ```
+
+  
 
 #### 5、安装redis
 
