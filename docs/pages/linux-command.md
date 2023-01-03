@@ -83,7 +83,6 @@ systemctl status firewalld
 ```
 
 
-
 #### 2、使用firewall-cmd配置端口
 
 ```shell
@@ -170,9 +169,9 @@ firewall-cmd --zone=public --remove-port=8080/tcp --permanent
 
 #### 2、安装JDK
 
-+ 下载JDK，将JDK上传到linux目录中
++ 下载`JDK`，将`JDK`上传到`linux`目录中或者通过`wget` 下载
 
-+ 解压JDK
++ 解压`JDK`
 
   ```shell
   # 解压
@@ -216,3 +215,144 @@ firewall-cmd --zone=public --remove-port=8080/tcp --permanent
 
   
 
+#### 3、安装tomcat
+
++ 通过`wget` 安装 `tomcat8.x`
+
+  `--no-check-certificate` (不检查证书)
+
+  ```shell
+  wget https://dlcdn.apache.org/tomcat/tomcat-8/v8.5.84/bin/apache-tomcat-8.5.84.tar.gz --no-check-certificate
+  ```
+
+  
+
++ 解压 `tomcat8.x`
+
+  ```shell
+  # 解压
+  tar -zxvf ./apache-tomcat-8.5.84.tar.gz
+  
+  # 重命名
+   mv ./apache-tomcat-8.5.84 tomcat8
+  ```
+
++ 开启防火墙端口 `8080`
+
+  ```shell
+  firewall-cmd --zone=public --add-port=8080/tcp --permanent
+  firewall-cmd --reload
+  ```
+
+  
+
+#### 4、安装mysql
+
+
+
+#### 5、安装redis
+
++  安装`gcc`
+
+  ```shell
+  yum install gcc-c++
+  ```
+
+  
+
++ 安装 `redis`
+
+  ```shell
+  wget http://download.redis.io/releases/redis-6.0.16.tar.gz
+  ```
+
+  
+
++ 解压 `redis`
+
+  ```shell
+  tar -zxvf ./redis6.0.16.tar.gz 
+  ```
+
+  
+
++ 进入`redis`目录并执行`make`命令编译
+
+  ```shell
+  cd redis6.0.16
+  make
+  ```
+
+   如果执行make命令报错
+
+  ```shell
+  # 先查看当前的gcc版本，查看gcc的版本是否在 5.3以上
+  gcc -v
+  
+  # 如果当前的gcc版本不是5.3以上，执行下面命令更新gcc版本，升级到 5.3及以上版本
+  yum -y install centos-release-scl
+  yum -y install devtoolset-9-gcc devtoolset-9-gcc-c++ devtoolset-9-binutils
+  scl enable devtoolset-9 bash
+   
+  ```
+
+  
+
++ `redis` 服务开启外网访问
+
+  开启防火墙端口 `6379`
+
+  ```shell
+  firewall-cmd --zone=public --add-port=6379/tcp --permanent
+  firewall-cmd --reload
+  ```
+
+  编辑 `redis.conf`文件
+
+  ```shell
+  vim  /home/env/redis-6.0.16/redis.conf
+  
+  # 注释 bind 127.0.0.1 或者改成 bind 0.0.0.0
+  # bind 127.0.0.1
+  
+  # 关闭保护模式，这样外网可以访问到，将protected-mode no 替换成 protected-mode yes
+  protected-mode no
+  
+  # 设置Redis密码 
+  requirepass yourPassword
+  ```
+
+  
+
++ 设置`redis` 自动后台运行
+
+  ```shell
+  # 修改redis.conf文件，将 daemonize no 替换成 daemonize yes
+  vim  /home/env/redis-6.0.16/redis.conf
+  
+  # 命令行模式下输入: /daemonize no 直接查找然后修改
+  ```
+
+  
+
++ 启动 `redis` 服务端
+
+  ```shell
+  cd /home/env/redis-6.0.16/src
+  redis-server ../redis.conf
+  ```
+
+  
+
++ 启动 `redis` 客户端
+
+  ```shell
+  cd /home/env/redis-6.0.16/src
+  redis-server ../redis.conf
+  
+  # 执行 ping 如果返回 PONG 就表示安装成功了
+  127.0.0.1:6379> ping
+  PONG
+  ```
+
+  
