@@ -371,10 +371,10 @@ firewall-cmd --zone=public --remove-port=8080/tcp --permanent
   
   
   # 修改策略(0表示LOW)
-  set global validate_password_policy = 0
+  set global validate.password_policy = 0;
   
   # 修改密码长度
-  set global validate_password_length = 4;
+  set global validate_password.length = 4;
   
   # 修改了策略和密码长度之后，可以再次修改密码
   alter user 'root'@'localhost' Identified BY 'root';
