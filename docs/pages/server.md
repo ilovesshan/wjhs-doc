@@ -31,6 +31,7 @@
 -- 回收统计表 recycle_statistical
 -- 用户积分表 wx_integral
 -- 用户反馈表 user_feedback
+-- app版本管理 app_version_upgrade
 
 -- 省份表
 -- 市、区表
@@ -40,965 +41,9 @@
 
 
 
-#### 2、数据表设计
+#### 2、数据字典预览
 
-```sql
-DROP DATABASE IF EXISTS wjhs;
-CREATE DATABASE wjhs;
-
-USE  wjhs;
-
--- 备注： 
--- 			1、省市区街道sql语句, 从文件中自行导入
--- 			2、CODE状态码参考：系统字典表(system_dict)
-
-
-
--- ----------------------------
--- 创建 系统字典表
--- ----------------------------
-DROP TABLE IF EXISTS `system_dict`;
-CREATE TABLE `system_dict` (
-    `id` VARCHAR(32) NOT NULL  COMMENT '主键id',
-    `dict_code` int(3) NOT NULL COMMENT '数据类型编码',
-    `dict_name` VARCHAR(30) NOT NULL COMMENT '数据类型名称',
-    `dict_describe` VARCHAR(100) DEFAULT NULL COMMENT '描述',
-    `sort` int(5) DEFAULT '1' COMMENT '排序',
-    `create_by` VARCHAR(50) NOT NULL COMMENT '创建人',
-    `create_by_user_id` VARCHAR(32) NOT NULL COMMENT '创建人id',
-    `update_by` VARCHAR(50) DEFAULT NULL COMMENT '修改人',
-    `update_by_user_id` VARCHAR(32) DEFAULT NULL COMMENT '修改人id',
-    `is_delete`  CHAR(3) DEFAULT 15  NOT NULL COMMENT '是否删除(14:已删除、15:未删除)',
-    `create_time` DATETIME(0) DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-    `update_time` DATETIME(0) DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '修改时间',
-    PRIMARY KEY (`id`),
-    UNIQUE KEY `idx_dict_code` (`dict_code`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='系统字典类型表';
-
-
--- ----------------------------
--- 创建 用户操作日志表
--- ----------------------------
-DROP TABLE IF EXISTS `operation_log`;
-CREATE TABLE `operation_log` (
-    `id` VARCHAR(32) NOT NULL COMMENT '主键id',
-    `business_module` VARCHAR(20) NOT NULL COMMENT '业务模块',
-    `business_type` VARCHAR(20) NOT NULL COMMENT '业务类型',
-    `business_describe` VARCHAR(30) DEFAULT NULL COMMENT '描述信息',
-    `api_method` VARCHAR(10)  NOT NULL COMMENT 'api方法',
-    `request_method` VARCHAR(10)  NOT NULL  COMMENT '请求方式',
-    `user_id` VARCHAR(32)  NOT NULL  COMMENT '操作人员id',
-    `user_name` VARCHAR(10)  NOT NULL  COMMENT '操作人员姓名',
-    `user_type` CHAR(3) NOT NULL COMMENT '用户类型(0:平台用户、1:微信用户、 2:骑手用户、 3:回收中心用户)',
-    `url` VARCHAR(30) NOT NULL COMMENT '请求url',
-    `ip` VARCHAR(32) DEFAULT NULL COMMENT '源IP地址',
-    `status` CHAR(3) NOT NULL COMMENT '操作状态(22:成功、23:失败)',
-    `is_delete`  CHAR(3) DEFAULT 15 NOT NULL COMMENT '是否删除(14:已删除、15:未删除)',
-    `error_message` VARCHAR(255) DEFAULT NULL COMMENT '错误消息',
-    `operation_time` DATETIME(0) DEFAULT NULL COMMENT '操作时间',
-    PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='操作日志';
-
-
--- ----------------------------
--- 创建 用户登录日志表
--- ----------------------------
-DROP TABLE IF EXISTS `login_log`;
-CREATE TABLE `login_log`(
-    `id` VARCHAR(32) NOT NULL  COMMENT '主键id',
-    `user_type` CHAR(3) NOT NULL COMMENT '用户类型(0:平台用户、1:微信用户、 2:骑手用户、 3:回收中心用户)',
-    `user_id` VARCHAR(32) NOT NULL COMMENT '用户id',
-    `token` VARCHAR(100) NOT NULL COMMENT '登录凭证',
-    `user_name` VARCHAR(10) NOT NULL COMMENT '用户名称',
-    `login_ip` VARCHAR(128) DEFAULT NULL COMMENT '登录IP',
-    `login_time` DATETIME(0) DEFAULT NULL COMMENT '登录时间',
-    `login_location` VARCHAR(50) DEFAULT NULL COMMENT '用户登录地址',
-    `is_delete` CHAR(3) DEFAULT 15 NOT NULL COMMENT '是否删除(14:已删除、15:未删除)',
-    `browser` VARCHAR(50)  NULL DEFAULT '' COMMENT '浏览器类型',
-    `system_os` VARCHAR(50)  NULL DEFAULT '' COMMENT '操作系统',
-    PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT= '用户登录表';
-
-
--- ----------------------------
--- 创建 小程序用户信息表
--- ----------------------------
-DROP TABLE IF EXISTS `wx_user`;
-CREATE TABLE `wx_user`  (
-    `id` VARCHAR(32) NOT NULL  COMMENT '主键id',
-    `open_id` VARCHAR(100) NOT NULL COMMENT 'open_id',
-    `skey` VARCHAR(100) NOT NULL COMMENT 'skey',
-    `session_key` VARCHAR(100) NOT NULL COMMENT 'session_key',
-    `gender` CHAR(3) DEFAULT NULL COMMENT '性别(20:男、21:女)',  
-    `avatar_url` VARCHAR(255) DEFAULT NULL COMMENT '头像',
-    `city` VARCHAR(255) DEFAULT NULL COMMENT '市',
-    `province` VARCHAR(255) DEFAULT NULL COMMENT '省',
-    `country` VARCHAR(255) DEFAULT NULL COMMENT '国',
-    `nick_name` VARCHAR(255) DEFAULT NULL COMMENT '昵称',
-    `is_delete`  CHAR(3) DEFAULT 15 NOT NULL COMMENT '是否删除(14:已删除、15:未删除)',
-    `last_visit_time` DATETIME(0) DEFAULT NULL COMMENT '最后登录时间',  
-    `create_time` DATETIME(0) DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-    `update_time` DATETIME(0) DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '修改时间',
-    PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='小程序用户信息表';
-
-
--- ----------------------------
--- 创建 小程序用户地址信息表
--- ----------------------------
-DROP TABLE IF EXISTS `adress`;
-CREATE TABLE `adress`  (
-    `id` VARCHAR(32) NOT NULL  COMMENT '主键id',
-    `base_addrerss` VARCHAR(50) NOT NULL COMMENT '基本地址(省市区地址)',
-    `detail_address` VARCHAR(150) NOT NULL COMMENT '详细地址',
-    `phone` VARCHAR(11) NOT NULL COMMENT '收件人手机号',
-    `user_name` VARCHAR(10) NOT NULL COMMENT '收件人姓名',
-    `longitude` VARCHAR(20) NOT NULL COMMENT '经度',
-    `latitude` VARCHAR(20) NOT NULL COMMENT '纬度',
-    `is_DEFAULT` CHAR(3) DEFAULT 19 NOT NULL COMMENT '是否是默认地址(18:默认地址、19:非默认地址)',
-    `is_delete`  CHAR(3) DEFAULT 15 COMMENT '是否删除(14:已删除、15:未删除)',
-    `create_time` DATETIME(0) DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-    `update_time` DATETIME(0) DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '修改时间',
-    PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='小程序用户地址信息表';
-
-
--- ----------------------------
--- 创建 小程序用户信息和地址信息关联表
--- ----------------------------
-DROP TABLE IF EXISTS `wx_user_address_rel`;
-CREATE TABLE `wx_user_address_rel`  (
-    `id` VARCHAR(32) NOT NULL  COMMENT '主键id',
-    `user_id` VARCHAR(32) NOT NULL COMMENT '用户id',
-    `address_id` VARCHAR(32) NOT NULL COMMENT '地址id',
-    FOREIGN KEY(`user_id`) REFERENCES wx_user(`id`),
-    FOREIGN KEY (`address_id`) REFERENCES adress(`id`),
-    UNIQUE (`user_id` ,`address_id`),
-    PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='小程序用户信息和地址信息关联表';
-
-
--- ----------------------------
--- 创建 骑手/回收中心用户/平台用户表
--- ----------------------------
-DROP TABLE IF EXISTS `user`;
-CREATE TABLE `user`  (
-    `id` VARCHAR(32) NOT NULL  COMMENT '主键id',
-    `username` VARCHAR(32) NOT NULL COMMENT '用户名称',
-    `password` VARCHAR(255) NOT NULL COMMENT '用户密码',
-    `user_type` CHAR(3) NOT NULL COMMENT '用户类型(0:平台用户、1:微信用户、 2:骑手用户、 3:回收中心用户)',
-    `gender` CHAR(3) DEFAULT NULL COMMENT '性别(20:男、21:女)',  
-    `attachment_id` VARCHAR(32) DEFAULT NULL COMMENT '附件id(头像)',
-    `nick_name` VARCHAR(255) DEFAULT NULL COMMENT '昵称',
-    `phone` VARCHAR(11) NOT NULL COMMENT '手机号',
-    `is_delete`  CHAR(3) DEFAULT 15 NOT NULL COMMENT '是否删除(14:已删除、15:未删除)',
-    `last_visit_time` DATETIME(0) DEFAULT NULL COMMENT '最后登录时间',  
-    `create_time` DATETIME(0) DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-    `update_time` DATETIME(0) DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '修改时间',
-    PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='骑手/回收中心用户/平台用户表';
-
-
--- ----------------------------
--- 创建 角色表
--- ----------------------------`
-CREATE TABLE `role` (
-    `id` VARCHAR(32) NOT NULL COMMENT '角色id',
-    `role_name` varchar(20) NOT NULL DEFAULT '' COMMENT '角色名称',
-    `role_code` varchar(40) DEFAULT NULL COMMENT '角色编码',
-    `description` varchar(255) DEFAULT NULL COMMENT '描述',
-    `is_delete`  CHAR(3) DEFAULT 15 NOT NULL COMMENT '是否删除(14:已删除、15:未删除)',
-    `create_time` timestamp(0) NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-    `update_time` timestamp(0) NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
-    PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8 COMMENT='角色表';
-
-
--- ----------------------------
--- 创建 用户角色关联表
--- ----------------------------
-DROP TABLE IF EXISTS `user_role`;
-create table `user_role`(
-    `id` VARCHAR(32) COMMENT '主键id',
-    `user_id` VARCHAR(32) COMMENT '用户id',
-    `role_id` VARCHAR(32) COMMENT '角色id',
-    `is_delete`  CHAR(3) DEFAULT 15 NOT NULL COMMENT '是否删除(14:已删除、15:未删除)',
-    `create_time` timestamp(0) NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-    `update_time` timestamp(0) NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
-    PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='用户角色关联表';
-
-
--- ----------------------------
--- 创建 权限表
--- ----------------------------
-CREATE TABLE `menu` (
-    `id` VARCHAR(32) NOT NULL COMMENT '编号',
-    `parent_id` VARCHAR(32) NOT NULL DEFAULT '0' COMMENT '所属上级',
-    `name` varchar(20) NOT NULL DEFAULT '' COMMENT '名称',
-    `type` tinyint(3) NOT NULL DEFAULT '0' COMMENT '类型(28:目录, 29:菜单,30:按钮)',
-    `path` varchar(100) DEFAULT NULL COMMENT '路由地址',
-    `component` varchar(100) DEFAULT NULL COMMENT '组件路径',
-    `perms` varchar(100) DEFAULT NULL COMMENT '权限标识',
-    `icon` varchar(100) DEFAULT NULL COMMENT '图标',
-    `sort_value` int(11) DEFAULT NULL COMMENT '排序',
-    `is_delete`  CHAR(3) DEFAULT 15 NOT NULL COMMENT '是否删除(14:已删除、15:未删除)',
-    `create_time` timestamp(0) NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-    `update_time` timestamp(0) NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
-    PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=35 DEFAULT CHARSET=utf8mb4 COMMENT='权限表';
-
--- ----------------------------
--- 创建 角色权限关联表
--- ----------------------------
-CREATE TABLE `role_menu` (
-    `id` VARCHAR(32) NOT NULL,
-    `role_id` VARCHAR(32) NOT NULL DEFAULT '0',
-    `menu_id` VARCHAR(32) NOT NULL DEFAULT '0',
-    `is_delete`  CHAR(3) DEFAULT 15 NOT NULL COMMENT '是否删除(14:已删除、15:未删除)',
-    `create_time` timestamp(0) NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-    `update_time` timestamp(0) NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
-    PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=33 DEFAULT CHARSET=utf8 COMMENT='角色权限关联表';
-
-
--- ----------------------------
--- 创建 附件表
--- ----------------------------
-DROP TABLE IF EXISTS `attachment`;
-CREATE TABLE `attachment` (
-    `id` VARCHAR(32) NOT NULL  COMMENT '主键id',
-    `url` VARCHAR(100) NOT NULL COMMENT '访问地址',
-    `create_by_user_id` VARCHAR(32) NOT NULL COMMENT '创建人id',
-    `create_by_user_name` VARCHAR(10) NOT NULL COMMENT '创建人name',
-    `create_by_user_type` CHAR(3) NOT NULL COMMENT '用户类型(0:平台用户、1:微信用户、 2:骑手用户、 3:回收中心用户)',
-    `is_delete`  CHAR(3) DEFAULT 15 NOT NULL COMMENT '是否删除(14:已删除、15:未删除)',
-    `create_time` DATETIME(0) DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-    `update_time` DATETIME(0) DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '修改时间',
-    PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COMMENT='系统附件表';
-
-
--- ----------------------------
--- 创建 轮播图表
--- ----------------------------
-DROP TABLE IF EXISTS `swiper`;
-CREATE TABLE `swiper`  (
-    `id` VARCHAR(32) NOT NULL  COMMENT '主键id',
-    `type` VARCHAR(100) DEFAULT NULL COMMENT '类型',
-    `attachment_id` VARCHAR(32) NOT NULL COMMENT '附件id',
-    `title` VARCHAR(30) DEFAULT NULL COMMENT '标题',
-    `sub_title` VARCHAR(100) DEFAULT NULL COMMENT '子标题',
-    `detail` VARCHAR(100) DEFAULT NULL COMMENT '详细信息',
-    `link` VARCHAR(100) DEFAULT NULL COMMENT '跳转链接',
-    `is_delete`  CHAR(3) DEFAULT 15 NOT NULL COMMENT '是否删除(14:已删除、15:未删除)',
-    `create_time` DATETIME(0) DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-    `update_time` DATETIME(0) DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '修改时间',
-    PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='轮播图表';
-
-
--- ----------------------------
--- 创建 公告栏表
--- ----------------------------
-DROP TABLE IF EXISTS `notice`;
-CREATE TABLE `notice`  (
-    `id` VARCHAR(32) NOT NULL COMMENT '主键id',
-    `type` VARCHAR(100) DEFAULT NULL COMMENT '类型',
-    `title` VARCHAR(30) NOT NULL COMMENT '标题',
-    `sub_title` VARCHAR(100) DEFAULT NULL COMMENT '子标题',
-    `detail` VARCHAR(100) DEFAULT NULL COMMENT '详细信息',
-    `link` VARCHAR(100) DEFAULT NULL COMMENT '跳转链接',
-    `is_delete`  CHAR(3) DEFAULT 15 NOT NULL COMMENT '是否删除(14:已删除、15:未删除)',
-    `create_time` DATETIME(0) DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-    `update_time` DATETIME(0) DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '修改时间',
-    PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='公告栏表';
-
-
--- ----------------------------
--- 创建 回收商品分类表
--- ----------------------------
-DROP TABLE IF EXISTS `recycle_goods_type`;
-CREATE TABLE `recycle_goods_type`  (
-    `id` VARCHAR(32) NOT NULL  COMMENT '主键id',
-    `name` VARCHAR(30) NOT NULL COMMENT '类别名称',
-    `describe` VARCHAR(100) DEFAULT NULL COMMENT '类别描述',
-    `is_delete`  CHAR(3) DEFAULT 15 NOT NULL COMMENT '是否删除(14:已删除、15:未删除)',
-    `create_time` DATETIME(0) DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-    `update_time` DATETIME(0) DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '修改时间',
-    PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='回收商品分类表';
-
-
--- ----------------------------
--- 创建 回收商品表
--- ----------------------------
-DROP TABLE IF EXISTS `recycle_goods`;
-CREATE TABLE `recycle_goods`  (
-    `id` VARCHAR(32) NOT NULL  COMMENT '主键id',
-    `type_id` VARCHAR(32) NOT NULL COMMENT '类别id',
-    `name` VARCHAR(30) NOT NULL COMMENT '商品名称',
-    `describe` VARCHAR(100) DEFAULT NULL COMMENT '商品描述',
-    `integral` double(7,2) NOT NULL COMMENT '商品可兑换积分',
-    `attachment_id` VARCHAR(32) NOT NULL COMMENT '附件id',
-    `user_price` double(7,2) NOT NULL COMMENT '用户价格',
-    `driver_price` double(7,2) NOT NULL COMMENT '骑手价格',
-    `recycle_center__price` double(7,2) NOT NULL COMMENT '回收中心用户价格',
-    `is_delete`  CHAR(3) DEFAULT 15 NOT NULL COMMENT '是否删除(14:已删除、15:未删除)',
-    `create_time` DATETIME(0) DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-    `update_time` DATETIME(0) DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '修改时间',
-    PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='回收商品表';
-
-
--- ----------------------------
--- 创建 回收商品订单表
--- ----------------------------
-DROP TABLE IF EXISTS `recycle_order`;
-CREATE TABLE `recycle_order`  (
-    `id` VARCHAR(32) NOT NULL  COMMENT '主键id',
-    `submit_user_id` VARCHAR(32) NOT NULL COMMENT '下单用户id',
-    `receive_user_id` VARCHAR(32) NOT NULL COMMENT '接单用户id',
-    `order_type` CHAR(3) NOT NULL COMMENT '订单类别(10:用户到骑手, 11:骑手到回收中心用户)',
-    `status` CHAR(3) NOT NULL COMMENT '订单类别(4:待接单, 5:待上门, 6:待结算, 7:已完结, 8:待已超时, 9:取消订单)',
-    `trading_money` double(7,2) NOT NULL COMMENT '交易金额',
-    `note` VARCHAR(255) DEFAULT NULL COMMENT '下单备注',
-    `is_delete`  CHAR(3) DEFAULT 15  NOT NULL COMMENT '是否删除(14:已删除、15:未删除)',
-    `create_time` DATETIME(0) DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-    `update_time` DATETIME(0) DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '修改时间',
-    PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='回收商品订单表';
-
-
--- ----------------------------
--- 创建 回收商品订单详情表
--- ----------------------------
-DROP TABLE IF EXISTS `recycle_order_detail`;
-CREATE TABLE `recycle_order_detail`(
-    `id` VARCHAR(32) NOT NULL  COMMENT '主键id',
-    `order_id` VARCHAR(32) NOT NULL COMMENT '订单id',
-    `goods_id` VARCHAR(32) NOT NULL COMMENT '商品id',
-    `weight` double(7,2)  NOT NULL COMMENT '商品重量(KG)',
-    `is_delete`  CHAR(3) DEFAULT 15 NOT NULL COMMENT '是否删除(14:已删除、15:未删除)',
-    `create_time` DATETIME(0) DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-    `update_time` DATETIME(0) DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '修改时间',
-    PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='回收商品订单详情表';
-
-
--- ----------------------------
--- 创建 积分商品分类表
--- ----------------------------
-DROP TABLE IF EXISTS `integral_goods_type`;
-CREATE TABLE `integral_goods_type`  (
-    `id` VARCHAR(32) NOT NULL  COMMENT '主键id',
-    `name` VARCHAR(30) NOT NULL COMMENT '类别名称',
-    `describe` VARCHAR(100) DEFAULT NULL COMMENT '类别描述',
-    `is_delete`  CHAR(3) DEFAULT 15  NOT NULL COMMENT '是否删除(14:已删除、15:未删除)',
-    `create_time` DATETIME(0) DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-    `update_time` DATETIME(0) DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '修改时间',
-    PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='积分商品分类表';
-
-
--- ----------------------------
--- 创建 积分商品表
--- ----------------------------
-DROP TABLE IF EXISTS `integral_goods`;
-CREATE TABLE `integral_goods`  (
-    `id` VARCHAR(32) NOT NULL  COMMENT '主键id',
-    `type_id`  int(11) NOT NULL COMMENT '类别id',
-    `name` VARCHAR(30) NOT NULL COMMENT '商品名称',
-    `describe` VARCHAR(100) DEFAULT NULL COMMENT '商品描述',
-    `integral` double(7,2) NOT NULL COMMENT '兑换商品需要的积分',
-    `attachment_id` VARCHAR(32) NOT NULL COMMENT '附件id',
-    `is_delete`  CHAR(3) DEFAULT 15 NOT NULL COMMENT '是否删除(14:已删除、15:未删除)',
-    `status`  CHAR(3) DEFAULT 16 COMMENT '商品状态(16:正常、17:已下架)',
-    `create_time` DATETIME(0) DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-    `update_time` DATETIME(0) DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '修改时间',
-    PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='积分商品表';
-
-
--- ----------------------------
--- 创建 积分商品表订单表
--- ----------------------------
-DROP TABLE IF EXISTS `integral_order`;
-CREATE TABLE `integral_order`  (
-    `id` VARCHAR(32) NOT NULL  COMMENT '主键id',
-    `user_id` VARCHAR(32) NOT NULL COMMENT '下单用户id',
-    `status` CHAR(3) NOT NULL COMMENT '订单类别(20:待发货, 21:待收货, 22:已完成)',
-    `trading_money` double(7,2) NOT NULL COMMENT '交易金额',
-    `note` VARCHAR(255) DEFAULT NULL COMMENT '下单备注',
-    `is_delete`  CHAR(3) DEFAULT 15 NOT NULL COMMENT '是否删除(14:已删除、15:未删除)',
-    `create_time` DATETIME(0) DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-    `update_time` DATETIME(0) DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '修改时间',
-    PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='积分商品表订单表';
-
-
--- ----------------------------
--- 创建 账户表
--- ----------------------------
-DROP TABLE IF EXISTS `account`;
-CREATE TABLE `account`  (
-    `id` VARCHAR(32) NOT NULL  COMMENT '主键id',
-    `user_type` CHAR(3) NOT NULL COMMENT '用户类型(0:平台用户、1:微信用户、 2:骑手用户、 3:回收中心用户)',
-    `user_id` VARCHAR(32) NOT NULL COMMENT '用户id',
-    `balance` double(7,2) NOT NULL COMMENT '用户余额',
-    `create_time` DATETIME(0) DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-    `update_time` DATETIME(0) DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '修改时间',
-    PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='账户表';
-
-
--- ----------------------------
--- 创建 账户流水表
--- ----------------------------
-DROP TABLE IF EXISTS `account_record`;
-CREATE TABLE `account_record`  (
-    `id` VARCHAR(32) NOT NULL  COMMENT '主键id',
-    `user_type_from` CHAR(3) NOT NULL COMMENT '支出用户类型(0:平台用户、1:微信用户、 2:骑手用户、 3:回收中心用户)',
-    `user_type_to` CHAR(3) NOT NULL COMMENT '收入用户类型(0:平台用户、1:微信用户、 2:骑手用户、 3:回收中心用户)',
-    `user_id_from` VARCHAR(32) NOT NULL COMMENT '支出用户id',
-    `user_id_to` VARCHAR(32) NOT NULL COMMENT '收入用户id',
-    `trading_id` VARCHAR(32) NULL COMMENT '交易id(订单id)',
-    `trading_money` double(7,2) NOT NULL COMMENT '交易金额',
-    `trading_type` CHAR(3) NOT NULL COMMENT '交易方式',
-    `trading_note` VARCHAR(255) DEFAULT NULL COMMENT '交易备注',
-    `create_time` DATETIME(0) DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-    `update_time` DATETIME(0) DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '修改时间',
-    PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='账户流水';
-
-```
-
-```sql
-/*
-navicat mysql data transfer
-
-source server         : mysql
-source server version : 80028
-source host           : localhost:3306
-source database       : wjhs
-
-target server type    : mysql
-target server version : 80028
-file encoding         : 65001
-
-date: 2022-12-29
-*/
-
-set foreign_key_checks=0;
-
--- ----------------------------
--- table structure for account
--- ----------------------------
-drop table if exists `account`;
-create table `account` (
-  `id` varchar(32) not null comment '主键id',
-  `user_type` char(3) not null comment '用户类型(0:平台用户、1:微信用户、 2:骑手用户、 3:回收中心用户)',
-  `user_id` varchar(32) not null comment '用户id',
-  `balance` double(10,2) not null comment '账户余额',
-  `is_delete` char(3) not null comment '是否删除(14:已删除、15:未删除)',
-  `create_time` datetime default current_timestamp comment '创建时间',
-  `update_time` datetime default current_timestamp on update current_timestamp comment '修改时间',
-  primary key (`id`)
-) engine=innodb default charset=utf8mb3 comment='账户表';
-
--- ----------------------------
--- table structure for account_record
--- ----------------------------
-drop table if exists `account_record`;
-create table `account_record` (
-  `id` varchar(32) not null comment '主键id',
-  `user_type_from` char(3) not null comment '支出用户类型(0:平台用户、1:微信用户、 2:骑手用户、 3:回收中心用户)',
-  `user_type_to` char(3) not null comment '收入用户类型(0:平台用户、1:微信用户、 2:骑手用户、 3:回收中心用户)',
-  `user_id_from` varchar(32) not null comment '支出用户id',
-  `user_id_to` varchar(32) not null comment '收入用户id',
-  `pay_status` char(3) not null comment '出入账状态(35:收入, 36:支出)',
-  `trading_id` varchar(32) default null comment '交易id(订单id)',
-  `trading_money` double(7,2) not null comment '交易金额',
-  `trading_type` char(3) not null comment '交易方式(24:微信、25:支付宝、 26:现金、 27:平台交易)',
-  `trading_note` varchar(255) default null comment '交易备注',
-  `is_delete` char(3) not null comment '是否删除(14:已删除、15:未删除)',
-  `create_time` datetime default current_timestamp comment '创建时间',
-  `update_time` datetime default current_timestamp on update current_timestamp comment '修改时间',
-  primary key (`id`)
-) engine=innodb default charset=utf8mb3 comment='账户流水';
-
--- ----------------------------
--- table structure for address
--- ----------------------------
-drop table if exists `address`;
-create table `address` (
-  `id` varchar(32) not null comment '主键id',
-  `detail_address` varchar(150) not null comment '详细地址',
-  `area` varchar(10) default null comment '县/区',
-  `city` varchar(15) default null comment '市',
-  `province` varchar(10) default null comment '省',
-  `phone` varchar(11) not null comment '收件人手机号',
-  `user_name` varchar(10) not null comment '收件人姓名',
-  `longitude` varchar(20) not null comment '经度',
-  `latitude` varchar(20) not null comment '纬度',
-  `is_default` char(3) not null default '19' comment '是否是默认地址(18:默认地址、19:非默认地址)',
-  `is_delete` char(3) default '15' comment '是否删除(14:已删除、15:未删除)',
-  `create_time` datetime default current_timestamp comment '创建时间',
-  `update_time` datetime default current_timestamp on update current_timestamp comment '修改时间',
-  primary key (`id`)
-) engine=innodb default charset=utf8mb3 comment='小程序用户地址信息表';
-
--- ----------------------------
--- table structure for attachment
--- ----------------------------
-drop table if exists `attachment`;
-create table `attachment` (
-  `id` varchar(32) not null comment '主键id',
-  `url` varchar(100) not null comment '访问地址',
-  `create_by_user_id` varchar(32) not null comment '创建人id',
-  `create_by_user_name` varchar(32) not null comment '创建人姓名',
-  `create_by_user_type` char(3) not null comment '用户类型(0:平台用户、1:微信用户、 2:骑手用户、 3:回收中心用户)',
-  `is_delete` char(3) not null default '15' comment '是否删除(14:已删除、15:未删除)',
-  `create_time` datetime default current_timestamp comment '创建时间',
-  `update_time` datetime default current_timestamp on update current_timestamp comment '修改时间',
-  primary key (`id`)
-) engine=innodb default charset=utf8mb3 comment='系统附件表';
-
--- ----------------------------
--- table structure for flyway_schema_history
--- ----------------------------
-drop table if exists `flyway_schema_history`;
-create table `flyway_schema_history` (
-  `installed_rank` int not null,
-  `version` varchar(50) default null,
-  `description` varchar(200) not null,
-  `type` varchar(20) not null,
-  `script` varchar(1000) not null,
-  `checksum` int default null,
-  `installed_by` varchar(100) not null,
-  `installed_on` timestamp not null default current_timestamp,
-  `execution_time` int not null,
-  `success` tinyint(1) not null,
-  primary key (`installed_rank`),
-  key `flyway_schema_history_s_idx` (`success`)
-) engine=innodb default charset=utf8mb3;
-
--- ----------------------------
--- table structure for integral_goods
--- ----------------------------
-drop table if exists `integral_goods`;
-create table `integral_goods` (
-  `id` varchar(32) not null comment '主键id',
-  `type_id` int not null comment '类别id',
-  `name` varchar(30) not null comment '商品名称',
-  `describe` varchar(100) default null comment '商品描述',
-  `integral` double(7,2) not null comment '兑换商品需要的积分',
-  `attachment_id` varchar(32) not null comment '附件id',
-  `is_delete` char(3) not null default '15' comment '是否删除(14:已删除、15:未删除)',
-  `status` char(3) default '16' comment '商品状态(16:正常、17:已下架)',
-  `create_time` datetime default current_timestamp comment '创建时间',
-  `update_time` datetime default current_timestamp on update current_timestamp comment '修改时间',
-  primary key (`id`)
-) engine=innodb default charset=utf8mb3 comment='积分商品表';
-
--- ----------------------------
--- table structure for integral_goods_type
--- ----------------------------
-drop table if exists `integral_goods_type`;
-create table `integral_goods_type` (
-  `id` varchar(32) not null comment '主键id',
-  `describe` varchar(100) default null comment '类别描述',
-  `is_delete` char(3) not null default '15' comment '是否删除(14:已删除、15:未删除)',
-  `create_time` datetime default current_timestamp comment '创建时间',
-  `update_time` datetime default current_timestamp on update current_timestamp comment '修改时间',
-  primary key (`id`)
-) engine=innodb default charset=utf8mb3 comment='积分商品分类表';
-
--- ----------------------------
--- table structure for integral_order
--- ----------------------------
-drop table if exists `integral_order`;
-create table `integral_order` (
-  `id` varchar(32) not null comment '主键id',
-  `user_id` varchar(32) not null comment '下单用户id',
-  `status` char(3) not null comment '订单类别(20:待发货, 21:待收货, 22:已完成)',
-  `trading_money` double(7,2) not null comment '交易金额',
-  `note` varchar(255) default null comment '下单备注',
-  `is_delete` char(3) not null default '15' comment '是否删除(14:已删除、15:未删除)',
-  `create_time` datetime default current_timestamp comment '创建时间',
-  `update_time` datetime default current_timestamp on update current_timestamp comment '修改时间',
-  primary key (`id`)
-) engine=innodb default charset=utf8mb3 comment='积分商品表订单表';
-
--- ----------------------------
--- table structure for login_log
--- ----------------------------
-drop table if exists `login_log`;
-create table `login_log` (
-  `id` varchar(32) not null comment '主键id',
-  `user_type` char(3) not null comment '用户类型(0:平台用户、1:微信用户、 2:骑手用户、 3:回收中心用户)',
-  `user_id` varchar(32) not null comment '用户id',
-  `token` varchar(100) not null comment '登录凭证',
-  `user_name` varchar(10) not null comment '用户名称',
-  `login_ip` varchar(128) default null comment '登录ip',
-  `login_time` datetime default null comment '登录时间',
-  `login_location` varchar(50) default null comment '用户登录地址',
-  `is_delete` char(3) not null default '15' comment '是否删除(14:已删除、15:未删除)',
-  `browser` varchar(50) default '' comment '浏览器类型',
-  `system_os` varchar(50) default '' comment '操作系统',
-  primary key (`id`)
-) engine=innodb default charset=utf8mb4 collate=utf8mb4_0900_ai_ci comment='用户登录表';
-
--- ----------------------------
--- table structure for menu
--- ----------------------------
-drop table if exists `menu`;
-create table `menu` (
-  `id` varchar(32) not null comment '编号',
-  `parent_id` varchar(32) not null default '0' comment '所属上级',
-  `name` varchar(20) not null default '' comment '名称',
-  `type` tinyint not null default '0' comment '类型(28:目录, 29:菜单,30:按钮)',
-  `path` varchar(100) default null comment '路由地址',
-  `component` varchar(100) default null comment '组件路径',
-  `perms` varchar(100) default null comment '权限标识',
-  `icon` varchar(100) default null comment '图标',
-  `sort_value` int default null comment '排序',
-  `is_delete` char(3) not null default '15' comment '是否删除(14:已删除、15:未删除)',
-  `create_time` timestamp not null default current_timestamp comment '创建时间',
-  `update_time` timestamp not null default current_timestamp on update current_timestamp comment '更新时间',
-  primary key (`id`)
-) engine=innodb default charset=utf8mb4 collate=utf8mb4_0900_ai_ci comment='权限表';
-
--- ----------------------------
--- table structure for notice
--- ----------------------------
-drop table if exists `notice`;
-create table `notice` (
-  `id` varchar(32) not null comment '主键id',
-  `type` char(3) not null comment '类型(31:小程序端、32:app端)',
-  `title` varchar(30) not null comment '标题',
-  `sub_title` varchar(100) default null comment '子标题',
-  `detail` varchar(100) default null comment '详细信息',
-  `link` varchar(100) default null comment '跳转链接',
-  `is_delete` char(3) not null default '15' comment '是否删除(14:已删除、15:未删除)',
-  `create_time` datetime default current_timestamp comment '创建时间',
-  `update_time` datetime default current_timestamp on update current_timestamp comment '修改时间',
-  primary key (`id`)
-) engine=innodb default charset=utf8mb3 comment='公告栏表';
-
--- ----------------------------
--- table structure for operation_log
--- ----------------------------
-drop table if exists `operation_log`;
-create table `operation_log` (
-  `id` varchar(32) not null comment '主键id',
-  `business_module` varchar(20) not null comment '业务模块',
-  `business_type` varchar(20) not null comment '业务类型',
-  `business_describe` varchar(30) default null comment '描述信息',
-  `api_method` varchar(255) not null comment 'api方法',
-  `request_method` varchar(10) not null comment '请求方式',
-  `user_id` varchar(32) not null comment '操作人员id',
-  `user_name` varchar(100) not null comment '操作人员姓名',
-  `user_type` char(3) not null comment '用户类型(0:平台用户、1:微信用户、 2:骑手用户、 3:回收中心用户)',
-  `url` varchar(255) not null comment '请求url',
-  `ip` varchar(32) default null comment '源ip地址',
-  `status` char(3) not null comment '操作状态(22:成功、23:失败)',
-  `is_delete` char(3) not null default '15' comment '是否删除(14:已删除、15:未删除)',
-  `error_message` text not null comment '错误消息',
-  `operation_time` datetime default null comment '操作时间',
-  primary key (`id`)
-) engine=innodb default charset=utf8mb4 collate=utf8mb4_0900_ai_ci comment='操作日志';
-
--- ----------------------------
--- table structure for recycle_goods
--- ----------------------------
-drop table if exists `recycle_goods`;
-create table `recycle_goods` (
-  `id` varchar(32) not null comment '主键id',
-  `type_id` varchar(32) not null comment '类别id',
-  `name` varchar(30) not null comment '商品名称',
-  `describe` varchar(100) default null comment '商品描述',
-  `integral` double(7,2) not null comment '商品可兑换积分',
-  `attachment_id` varchar(32) not null comment '附件id',
-  `user_price` double(7,2) not null comment '用户价格',
-  `driver_price` double(7,2) not null comment '骑手价格',
-  `recycle_center_price` double(7,2) not null comment '回收中心用户价格',
-  `is_delete` char(3) not null default '15' comment '是否删除(14:已删除、15:未删除)',
-  `status` char(3) default '33' comment '商品状态(33:上架、34:下架)',
-  `create_time` datetime default current_timestamp comment '创建时间',
-  `update_time` datetime default current_timestamp on update current_timestamp comment '修改时间',
-  primary key (`id`)
-) engine=innodb default charset=utf8mb3 comment='回收商品表';
-
--- ----------------------------
--- table structure for recycle_goods_type
--- ----------------------------
-drop table if exists `recycle_goods_type`;
-create table `recycle_goods_type` (
-  `id` varchar(32) not null comment '主键id',
-  `name` varchar(30) not null comment '类别名称',
-  `describe` varchar(100) default null comment '类别描述',
-  `is_delete` char(3) not null default '15' comment '是否删除(14:已删除、15:未删除)',
-  `status` char(3) default '33' comment '商品状态(33:上架、34:下架)',
-  `create_time` datetime default current_timestamp comment '创建时间',
-  `update_time` datetime default current_timestamp on update current_timestamp comment '修改时间',
-  primary key (`id`)
-) engine=innodb default charset=utf8mb3 comment='回收商品分类表';
-
--- ----------------------------
--- table structure for recycle_order
--- ----------------------------
-drop table if exists `recycle_order`;
-create table `recycle_order` (
-  `id` varchar(32) not null comment '主键id',
-  `submit_user_id` varchar(32) not null comment '下单用户id',
-  `receive_user_id` varchar(32) default null comment '接单用户id',
-  `order_type` char(3) not null comment '订单类别(10:用户到骑手, 11:骑手到回收中心用户)',
-  `status` char(3) not null comment '订单类别(4:待接单, 5:待上门, 6:待结算, 7:已完结, 8:已超时, 9:取消订单)',
-  `trading_money` double(7,2) not null comment '交易金额',
-  `total_weight` double(7,2) not null comment '订单总重量',
-  `total_integral` double(7,2) not null comment '订单积分',
-  `address_id` varchar(32) not null comment '上门地址id',
-  `appointment_begin_time` datetime not null comment ' 预约开始时间',
-  `appointment_end_time` datetime not null comment '预约结束时间',
-  `note` varchar(255) default null comment '下单备注',
-  `note_attachmentids` varchar(255) default null comment '备注图片id列表',
-  `is_delete` char(3) not null default '15' comment '是否删除(14:已删除、15:未删除)',
-  `create_time` datetime default current_timestamp comment '创建时间',
-  `update_time` datetime default current_timestamp on update current_timestamp comment '修改时间',
-  primary key (`id`)
-) engine=innodb default charset=utf8mb3 comment='回收商品订单表';
-
--- ----------------------------
--- table structure for recycle_order_detail
--- ----------------------------
-drop table if exists `recycle_order_detail`;
-create table `recycle_order_detail` (
-  `id` varchar(32) not null comment '主键id',
-  `order_id` varchar(32) not null comment '订单id',
-  `goods_id` varchar(32) not null comment '商品id',
-  `weight` double(7,2) not null comment '商品重量(kg)',
-  `is_delete` char(3) not null default '15' comment '是否删除(14:已删除、15:未删除)',
-  `create_time` datetime default current_timestamp comment '创建时间',
-  `update_time` datetime default current_timestamp on update current_timestamp comment '修改时间',
-  primary key (`id`)
-) engine=innodb default charset=utf8mb3 comment='回收商品订单详情表';
-
--- ----------------------------
--- table structure for recycle_statistical
--- ----------------------------
-drop table if exists `recycle_statistical`;
-create table `recycle_statistical` (
-  `id` varchar(32) not null comment '主键id',
-  `order_id` varchar(32) not null comment '订单id',
-  `submit_user_id` varchar(32) not null comment '下单用户id',
-  `receive_user_id` varchar(32) not null comment '接单用户id',
-  `weight` double(7,2) not null comment '商品重量(kg)',
-  `order_type` char(3) not null comment '订单类别(10:用户到骑手, 11:骑手到回收中心用户)',
-  `is_delete` char(3) not null default '15' comment '是否删除(14:已删除、15:未删除)',
-  `create_time` datetime default current_timestamp comment '创建时间',
-  `update_time` datetime default current_timestamp on update current_timestamp comment '修改时间',
-  primary key (`id`)
-) engine=innodb default charset=utf8mb4 collate=utf8mb4_0900_ai_ci comment='回收统计表';
-
--- ----------------------------
--- table structure for role
--- ----------------------------
-drop table if exists `role`;
-create table `role` (
-  `id` varchar(32) not null comment '角色id',
-  `role_name` varchar(20) not null default '' comment '角色名称',
-  `role_code` varchar(40) default null comment '角色编码',
-  `description` varchar(255) default null comment '描述',
-  `is_delete` char(3) not null default '15' comment '是否删除(14:已删除、15:未删除)',
-  `create_time` timestamp not null default current_timestamp comment '创建时间',
-  `update_time` timestamp not null default current_timestamp on update current_timestamp comment '更新时间',
-  primary key (`id`)
-) engine=innodb default charset=utf8mb3 comment='角色表';
-
--- ----------------------------
--- table structure for role_menu
--- ----------------------------
-drop table if exists `role_menu`;
-create table `role_menu` (
-  `id` varchar(32) not null,
-  `role_id` varchar(32) not null default '0',
-  `menu_id` varchar(32) not null default '0',
-  `is_delete` char(3) not null default '15' comment '是否删除(14:已删除、15:未删除)',
-  `create_time` timestamp not null default current_timestamp comment '创建时间',
-  `update_time` timestamp not null default current_timestamp on update current_timestamp comment '更新时间',
-  primary key (`id`)
-) engine=innodb default charset=utf8mb3 comment='角色权限关联表';
-
--- ----------------------------
--- table structure for swiper
--- ----------------------------
-drop table if exists `swiper`;
-create table `swiper` (
-  `id` varchar(32) not null comment '主键id',
-  `type` char(3) not null comment '类型(31:小程序端、32:app端)',
-  `attachment_id` varchar(32) not null comment '附件id',
-  `title` varchar(30) default null comment '标题',
-  `sub_title` varchar(100) default null comment '子标题',
-  `detail` varchar(100) default null comment '详细信息',
-  `link` varchar(100) default null comment '跳转链接',
-  `is_delete` char(3) not null default '15' comment '是否删除(14:已删除、15:未删除)',
-  `create_time` datetime default current_timestamp comment '创建时间',
-  `update_time` datetime default current_timestamp on update current_timestamp comment '修改时间',
-  primary key (`id`)
-) engine=innodb default charset=utf8mb3 comment='轮播图表';
-
--- ----------------------------
--- table structure for system_dict
--- ----------------------------
-drop table if exists `system_dict`;
-create table `system_dict` (
-  `id` varchar(32) not null comment '主键id',
-  `dict_code` int not null comment '数据类型编码',
-  `dict_name` varchar(30) not null comment '数据类型名称',
-  `dict_describe` varchar(100) default null comment '描述',
-  `sort` int default '1' comment '排序',
-  `create_by` varchar(50) not null comment '创建人',
-  `create_by_user_id` varchar(32) not null comment '创建人id',
-  `update_by` varchar(50) default null comment '修改人',
-  `update_by_user_id` varchar(32) default null comment '修改人id',
-  `is_delete` char(3) not null default '15' comment '是否删除(14:已删除、15:未删除)',
-  `create_time` datetime default current_timestamp comment '创建时间',
-  `update_time` datetime default current_timestamp on update current_timestamp comment '修改时间',
-  primary key (`id`),
-  unique key `idx_dict_code` (`dict_code`)
-) engine=innodb default charset=utf8mb3 comment='系统字典类型表';
-
--- ----------------------------
--- table structure for user
--- ----------------------------
-drop table if exists `user`;
-create table `user` (
-  `id` varchar(32) not null comment '主键id',
-  `username` varchar(32) not null comment '用户名称',
-  `password` varchar(255) not null comment '用户密码',
-  `user_type` char(3) not null comment '用户类型(0:平台用户、1:微信用户、 2:骑手用户、 3:回收中心用户)',
-  `gender` char(3) default null comment '性别(20:男、21:女)',
-  `attachment_id` varchar(32) default null comment '附件id(头像)',
-  `nick_name` varchar(255) default null comment '昵称',
-  `phone` varchar(11) not null comment '手机号',
-  `is_delete` char(3) not null default '15' comment '是否删除(14:已删除、15:未删除)',
-  `last_visit_time` datetime default null comment '最后登录时间',
-  `create_time` datetime default current_timestamp comment '创建时间',
-  `update_time` datetime default current_timestamp on update current_timestamp comment '修改时间',
-  primary key (`id`)
-) engine=innodb default charset=utf8mb3 comment='骑手/回收中心用户/平台用户表';
-
--- ----------------------------
--- table structure for user_feedback
--- ----------------------------
-drop table if exists `user_feedback`;
-create table `user_feedback` (
-  `id` varchar(32) not null comment '主键id',
-  `user_id` varchar(32) not null comment '用户id',
-  `user_type` char(3) not null comment '用户类型(0:平台用户、1:微信用户、 2:骑手用户、 3:回收中心用户)',
-  `feedback_title` varchar(32) not null comment '反馈标题',
-  `feedback_detail` varchar(255) not null comment '反馈详细',
-  `attachment_id` varchar(32) default null comment '附件id',
-  `is_solve` char(3) not null default '37' comment '是否解决(37:未处理、38:已处理)',
-  `is_delete` char(3) not null default '15' comment '是否删除(14:已删除、15:未删除)',
-  `create_time` datetime default current_timestamp comment '创建时间',
-  `update_time` datetime default current_timestamp on update current_timestamp comment '修改时间',
-  primary key (`id`)
-) engine=innodb default charset=utf8mb4 collate=utf8mb4_0900_ai_ci comment='用户反馈表';
-
--- ----------------------------
--- table structure for user_role
--- ----------------------------
-drop table if exists `user_role`;
-create table `user_role` (
-  `id` varchar(32) not null comment '主键id',
-  `user_id` varchar(32) default null comment '用户id',
-  `role_id` varchar(32) default null comment '角色id',
-  `is_delete` char(3) not null default '15' comment '是否删除(14:已删除、15:未删除)',
-  `create_time` timestamp not null default current_timestamp comment '创建时间',
-  `update_time` timestamp not null default current_timestamp on update current_timestamp comment '更新时间',
-  primary key (`id`)
-) engine=innodb default charset=utf8mb3 comment='用户角色关联表';
-
--- ----------------------------
--- table structure for wx_integral
--- ----------------------------
-drop table if exists `wx_integral`;
-create table `wx_integral` (
-  `id` varchar(32) not null comment '主键id',
-  `user_id` varchar(32) not null comment '用户id',
-  `integral` double(7,2) not null comment '用户积分',
-  `is_delete` char(3) not null default '15' comment '是否删除(14:已删除、15:未删除)',
-  `create_time` datetime default current_timestamp comment '创建时间',
-  `update_time` datetime default current_timestamp on update current_timestamp comment '修改时间',
-  primary key (`id`)
-) engine=innodb default charset=utf8mb4 collate=utf8mb4_0900_ai_ci comment='用户积分表';
-
--- ----------------------------
--- table structure for wx_integral_record
--- ----------------------------
-drop table if exists `wx_integral_record`;
-create table `wx_integral_record` (
-  `id` varchar(32) not null comment '主键id',
-  `user_id` varchar(32) not null comment '用户id',
-  `order_id` varchar(32) not null comment '订单id',
-  `pay_status` char(3) not null comment '出入账状态(35:收入, 36:支出)',
-  `trading_integral` double(7,2) not null comment '交易积分',
-  `is_delete` char(3) not null default '15' comment '是否删除(14:已删除、15:未删除)',
-  `create_time` datetime default current_timestamp comment '创建时间',
-  `update_time` datetime default current_timestamp on update current_timestamp comment '修改时间',
-  primary key (`id`)
-) engine=innodb default charset=utf8mb4 collate=utf8mb4_0900_ai_ci comment='用户积分流水表';
-
--- ----------------------------
--- table structure for wx_user
--- ----------------------------
-drop table if exists `wx_user`;
-create table `wx_user` (
-  `id` varchar(32) not null comment '主键id',
-  `open_id` varchar(100) not null comment 'open_id',
-  `skey` varchar(100) not null comment 'skey',
-  `session_key` varchar(100) not null comment 'session_key',
-  `gender` char(3) default null comment '性别(20:男、21:女)',
-  `avatar_url` varchar(255) default null comment '头像',
-  `city` varchar(255) default null comment '市',
-  `province` varchar(255) default null comment '省',
-  `country` varchar(255) default null comment '国',
-  `nick_name` varchar(255) default null comment '昵称',
-  `is_delete` char(3) not null default '15' comment '是否删除(14:已删除、15:未删除)',
-  `last_visit_time` datetime default null comment '最后登录时间',
-  `create_time` datetime default current_timestamp comment '创建时间',
-  `update_time` datetime default current_timestamp on update current_timestamp comment '修改时间',
-  primary key (`id`)
-) engine=innodb default charset=utf8mb3 comment='小程序用户信息表';
-
--- ----------------------------
--- table structure for wx_user_address_rel
--- ----------------------------
-drop table if exists `wx_user_address_rel`;
-create table `wx_user_address_rel` (
-  `id` varchar(32) character set utf8 collate utf8_danish_ci not null comment '主键id',
-  `user_id` varchar(32) not null comment '用户id',
-  `address_id` varchar(32) not null comment '地址id',
-  `is_delete` char(3) not null default '15' comment '是否删除(14:已删除、15:未删除)',
-  `create_time` datetime default current_timestamp comment '创建时间',
-  `update_time` datetime default current_timestamp on update current_timestamp comment '修改时间',
-  primary key (`id`),
-  unique key `user_id` (`user_id`,`address_id`),
-  key `address_id` (`address_id`),
-  constraint `wx_user_address_rel_ibfk_1` foreign key (`user_id`) references `wx_user` (`id`),
-  constraint `wx_user_address_rel_ibfk_2` foreign key (`address_id`) references `address` (`id`)
-) engine=innodb default charset=utf8mb3 comment='小程序用户信息和地址信息关联表';
-
-```
-
-
-
-#### 3、字典预览
-
-```
+```tex
 用户类型(yhlx)
 0：平台用户
 1：微信用户
@@ -1073,13 +118,550 @@ create table `wx_user_address_rel` (
 33：上架
 34：下架
 
+
 出入账状态(crzzt)
 35：支出
 36：收入
 
+
 反馈处理状态(fkclzt)
 37：未处理
 38：已处理
+
+
+app更新状态(appgxzt)
+39：无版本更新
+40：有版本更新，不需要强制升级
+41：有版本更新，需要强制升级
+```
+
+
+
+#### 3、数据表设计
+
+```sql
+-- ----------------------------
+-- Table structure for account
+-- ----------------------------
+DROP TABLE IF EXISTS `account`;
+CREATE TABLE `account` (
+  `id` varchar(32) NOT NULL COMMENT '主键id',
+  `user_type` char(3) NOT NULL COMMENT '用户类型(0:平台用户、1:微信用户、 2:骑手用户、 3:回收中心用户)',
+  `user_id` varchar(32) NOT NULL COMMENT '用户id',
+  `balance` double(10,2) NOT NULL COMMENT '账户余额',
+  `is_delete` char(3) NOT NULL COMMENT '是否删除(14:已删除、15:未删除)',
+  `create_time` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `update_time` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '修改时间',
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COMMENT='账户表';
+
+-- ----------------------------
+-- Table structure for account_record
+-- ----------------------------
+DROP TABLE IF EXISTS `account_record`;
+CREATE TABLE `account_record` (
+  `id` varchar(32) NOT NULL COMMENT '主键id',
+  `user_type_from` char(3) NOT NULL COMMENT '支出用户类型(0:平台用户、1:微信用户、 2:骑手用户、 3:回收中心用户)',
+  `user_type_to` char(3) NOT NULL COMMENT '收入用户类型(0:平台用户、1:微信用户、 2:骑手用户、 3:回收中心用户)',
+  `user_id_from` varchar(32) NOT NULL COMMENT '支出用户id',
+  `user_id_to` varchar(32) NOT NULL COMMENT '收入用户id',
+  `pay_status` char(3) NOT NULL COMMENT '出入账状态(35:收入, 36:支出)',
+  `trading_id` varchar(32) DEFAULT NULL COMMENT '交易id(订单id)',
+  `trading_money` double(7,2) NOT NULL COMMENT '交易金额',
+  `trading_type` char(3) NOT NULL COMMENT '交易方式(24:微信、25:支付宝、 26:现金、 27:平台交易)',
+  `trading_note` varchar(255) DEFAULT NULL COMMENT '交易备注',
+  `is_delete` char(3) NOT NULL COMMENT '是否删除(14:已删除、15:未删除)',
+  `create_time` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `update_time` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '修改时间',
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COMMENT='账户流水';
+
+-- ----------------------------
+-- Table structure for address
+-- ----------------------------
+DROP TABLE IF EXISTS `address`;
+CREATE TABLE `address` (
+  `id` varchar(32) NOT NULL COMMENT '主键id',
+  `detail_address` varchar(150) NOT NULL COMMENT '详细地址',
+  `area` varchar(10) DEFAULT NULL COMMENT '县/区',
+  `city` varchar(15) DEFAULT NULL COMMENT '市',
+  `province` varchar(10) DEFAULT NULL COMMENT '省',
+  `phone` varchar(11) NOT NULL COMMENT '收件人手机号',
+  `user_name` varchar(10) NOT NULL COMMENT '收件人姓名',
+  `longitude` varchar(20) NOT NULL COMMENT '经度',
+  `latitude` varchar(20) NOT NULL COMMENT '纬度',
+  `is_default` char(3) NOT NULL DEFAULT '19' COMMENT '是否是默认地址(18:默认地址、19:非默认地址)',
+  `is_delete` char(3) DEFAULT '15' COMMENT '是否删除(14:已删除、15:未删除)',
+  `create_time` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `update_time` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '修改时间',
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COMMENT='小程序用户地址信息表';
+
+-- ----------------------------
+-- Table structure for app_version_upgrade
+-- ----------------------------
+DROP TABLE IF EXISTS `app_version_upgrade`;
+CREATE TABLE `app_version_upgrade` (
+  `id` varchar(32) NOT NULL COMMENT '主键id',
+  `update_status` char(3) NOT NULL COMMENT 'app更新状态(39:无版本更新、40:有版本更新，不需要强制升级、41:有版本更新，需要强制升级)',
+  `version_code` varchar(5) NOT NULL COMMENT '编译版本号(唯一)',
+  `version_name` varchar(10) NOT NULL COMMENT '版本名(用于展示)',
+  `major` tinyint NOT NULL COMMENT '主版本号',
+  `minor` tinyint NOT NULL COMMENT '次版本号',
+  `patch` tinyint NOT NULL COMMENT '修订号',
+  `modify_content` varchar(255) DEFAULT '' COMMENT '升级提示',
+  `download_url` varchar(255) NOT NULL COMMENT '下载地址',
+  `apk_size` int NOT NULL COMMENT '文件的大小(单位:kb)',
+  `apk_md5` varchar(255) DEFAULT NULL COMMENT 'md5值',
+  `is_delete` char(3) NOT NULL DEFAULT '15' COMMENT '是否删除(14:已删除、15:未删除)',
+  `create_time` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `update_time` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '修改时间',
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='app版本升级表';
+
+-- ----------------------------
+-- Table structure for attachment
+-- ----------------------------
+DROP TABLE IF EXISTS `attachment`;
+CREATE TABLE `attachment` (
+  `id` varchar(32) NOT NULL COMMENT '主键id',
+  `url` varchar(100) NOT NULL COMMENT '访问地址',
+  `create_by_user_id` varchar(32) NOT NULL COMMENT '创建人id',
+  `create_by_user_name` varchar(32) NOT NULL COMMENT '创建人姓名',
+  `create_by_user_type` char(3) NOT NULL COMMENT '用户类型(0:平台用户、1:微信用户、 2:骑手用户、 3:回收中心用户)',
+  `is_delete` char(3) NOT NULL DEFAULT '15' COMMENT '是否删除(14:已删除、15:未删除)',
+  `create_time` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `update_time` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '修改时间',
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COMMENT='系统附件表';
+
+-- ----------------------------
+-- Table structure for flyway_schema_history
+-- ----------------------------
+DROP TABLE IF EXISTS `flyway_schema_history`;
+CREATE TABLE `flyway_schema_history` (
+  `installed_rank` int NOT NULL,
+  `version` varchar(50) DEFAULT NULL,
+  `description` varchar(200) NOT NULL,
+  `type` varchar(20) NOT NULL,
+  `script` varchar(1000) NOT NULL,
+  `checksum` int DEFAULT NULL,
+  `installed_by` varchar(100) NOT NULL,
+  `installed_on` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `execution_time` int NOT NULL,
+  `success` tinyint(1) NOT NULL,
+  PRIMARY KEY (`installed_rank`),
+  KEY `flyway_schema_history_s_idx` (`success`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
+
+-- ----------------------------
+-- Table structure for integral_goods
+-- ----------------------------
+DROP TABLE IF EXISTS `integral_goods`;
+CREATE TABLE `integral_goods` (
+  `id` varchar(32) NOT NULL COMMENT '主键id',
+  `type_id` int NOT NULL COMMENT '类别id',
+  `name` varchar(30) NOT NULL COMMENT '商品名称',
+  `describe` varchar(100) DEFAULT NULL COMMENT '商品描述',
+  `integral` double(7,2) NOT NULL COMMENT '兑换商品需要的积分',
+  `attachment_id` varchar(32) NOT NULL COMMENT '附件id',
+  `is_delete` char(3) NOT NULL DEFAULT '15' COMMENT '是否删除(14:已删除、15:未删除)',
+  `status` char(3) DEFAULT '16' COMMENT '商品状态(16:正常、17:已下架)',
+  `create_time` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `update_time` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '修改时间',
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COMMENT='积分商品表';
+
+-- ----------------------------
+-- Table structure for integral_goods_type
+-- ----------------------------
+DROP TABLE IF EXISTS `integral_goods_type`;
+CREATE TABLE `integral_goods_type` (
+  `id` varchar(32) NOT NULL COMMENT '主键id',
+  `describe` varchar(100) DEFAULT NULL COMMENT '类别描述',
+  `is_delete` char(3) NOT NULL DEFAULT '15' COMMENT '是否删除(14:已删除、15:未删除)',
+  `create_time` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `update_time` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '修改时间',
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COMMENT='积分商品分类表';
+
+-- ----------------------------
+-- Table structure for integral_order
+-- ----------------------------
+DROP TABLE IF EXISTS `integral_order`;
+CREATE TABLE `integral_order` (
+  `id` varchar(32) NOT NULL COMMENT '主键id',
+  `user_id` varchar(32) NOT NULL COMMENT '下单用户id',
+  `status` char(3) NOT NULL COMMENT '订单类别(20:待发货, 21:待收货, 22:已完成)',
+  `trading_money` double(7,2) NOT NULL COMMENT '交易金额',
+  `note` varchar(255) DEFAULT NULL COMMENT '下单备注',
+  `is_delete` char(3) NOT NULL DEFAULT '15' COMMENT '是否删除(14:已删除、15:未删除)',
+  `create_time` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `update_time` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '修改时间',
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COMMENT='积分商品表订单表';
+
+-- ----------------------------
+-- Table structure for login_log
+-- ----------------------------
+DROP TABLE IF EXISTS `login_log`;
+CREATE TABLE `login_log` (
+  `id` varchar(32) NOT NULL COMMENT '主键id',
+  `user_type` char(3) NOT NULL COMMENT '用户类型(0:平台用户、1:微信用户、 2:骑手用户、 3:回收中心用户)',
+  `user_id` varchar(32) NOT NULL COMMENT '用户id',
+  `token` varchar(100) NOT NULL COMMENT '登录凭证',
+  `user_name` varchar(10) NOT NULL COMMENT '用户名称',
+  `login_ip` varchar(128) DEFAULT NULL COMMENT '登录IP',
+  `login_time` datetime DEFAULT NULL COMMENT '登录时间',
+  `login_location` varchar(50) DEFAULT NULL COMMENT '用户登录地址',
+  `is_delete` char(3) NOT NULL DEFAULT '15' COMMENT '是否删除(14:已删除、15:未删除)',
+  `browser` varchar(50) DEFAULT '' COMMENT '浏览器类型',
+  `system_os` varchar(50) DEFAULT '' COMMENT '操作系统',
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='用户登录表';
+
+-- ----------------------------
+-- Table structure for menu
+-- ----------------------------
+DROP TABLE IF EXISTS `menu`;
+CREATE TABLE `menu` (
+  `id` varchar(32) NOT NULL COMMENT '编号',
+  `parent_id` varchar(32) NOT NULL DEFAULT '0' COMMENT '所属上级',
+  `name` varchar(20) NOT NULL DEFAULT '' COMMENT '名称',
+  `type` tinyint NOT NULL DEFAULT '0' COMMENT '类型(28:目录, 29:菜单,30:按钮)',
+  `path` varchar(100) DEFAULT NULL COMMENT '路由地址',
+  `component` varchar(100) DEFAULT NULL COMMENT '组件路径',
+  `perms` varchar(100) DEFAULT NULL COMMENT '权限标识',
+  `icon` varchar(100) DEFAULT NULL COMMENT '图标',
+  `sort_value` int DEFAULT NULL COMMENT '排序',
+  `is_delete` char(3) NOT NULL DEFAULT '15' COMMENT '是否删除(14:已删除、15:未删除)',
+  `create_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `update_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='权限表';
+
+-- ----------------------------
+-- Table structure for notice
+-- ----------------------------
+DROP TABLE IF EXISTS `notice`;
+CREATE TABLE `notice` (
+  `id` varchar(32) NOT NULL COMMENT '主键id',
+  `type` char(3) NOT NULL COMMENT '类型(31:小程序端、32:App端)',
+  `title` varchar(30) NOT NULL COMMENT '标题',
+  `sub_title` varchar(100) DEFAULT NULL COMMENT '子标题',
+  `detail` varchar(100) DEFAULT NULL COMMENT '详细信息',
+  `link` varchar(100) DEFAULT NULL COMMENT '跳转链接',
+  `is_delete` char(3) NOT NULL DEFAULT '15' COMMENT '是否删除(14:已删除、15:未删除)',
+  `create_time` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `update_time` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '修改时间',
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COMMENT='公告栏表';
+
+-- ----------------------------
+-- Table structure for operation_log
+-- ----------------------------
+DROP TABLE IF EXISTS `operation_log`;
+CREATE TABLE `operation_log` (
+  `id` varchar(32) NOT NULL COMMENT '主键id',
+  `business_module` varchar(20) NOT NULL COMMENT '业务模块',
+  `business_type` varchar(20) NOT NULL COMMENT '业务类型',
+  `business_describe` varchar(30) DEFAULT NULL COMMENT '描述信息',
+  `api_method` varchar(255) NOT NULL COMMENT 'api方法',
+  `request_method` varchar(10) NOT NULL COMMENT '请求方式',
+  `user_id` varchar(32) NOT NULL COMMENT '操作人员id',
+  `user_name` varchar(100) NOT NULL COMMENT '操作人员姓名',
+  `user_type` char(3) NOT NULL COMMENT '用户类型(0:平台用户、1:微信用户、 2:骑手用户、 3:回收中心用户)',
+  `url` varchar(255) NOT NULL COMMENT '请求url',
+  `ip` varchar(32) DEFAULT NULL COMMENT '源IP地址',
+  `status` char(3) NOT NULL COMMENT '操作状态(22:成功、23:失败)',
+  `is_delete` char(3) NOT NULL DEFAULT '15' COMMENT '是否删除(14:已删除、15:未删除)',
+  `error_message` text NOT NULL COMMENT '错误消息',
+  `operation_time` datetime DEFAULT NULL COMMENT '操作时间',
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='操作日志';
+
+-- ----------------------------
+-- Table structure for recycle_goods
+-- ----------------------------
+DROP TABLE IF EXISTS `recycle_goods`;
+CREATE TABLE `recycle_goods` (
+  `id` varchar(32) NOT NULL COMMENT '主键id',
+  `type_id` varchar(32) NOT NULL COMMENT '类别id',
+  `name` varchar(30) NOT NULL COMMENT '商品名称',
+  `describe` varchar(100) DEFAULT NULL COMMENT '商品描述',
+  `integral` double(7,2) NOT NULL COMMENT '商品可兑换积分',
+  `attachment_id` varchar(32) NOT NULL COMMENT '附件id',
+  `user_price` double(7,2) NOT NULL COMMENT '用户价格',
+  `driver_price` double(7,2) NOT NULL COMMENT '骑手价格',
+  `recycle_center_price` double(7,2) NOT NULL COMMENT '回收中心用户价格',
+  `is_delete` char(3) NOT NULL DEFAULT '15' COMMENT '是否删除(14:已删除、15:未删除)',
+  `status` char(3) DEFAULT '33' COMMENT '商品状态(33:上架、34:下架)',
+  `create_time` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `update_time` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '修改时间',
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COMMENT='回收商品表';
+
+-- ----------------------------
+-- Table structure for recycle_goods_type
+-- ----------------------------
+DROP TABLE IF EXISTS `recycle_goods_type`;
+CREATE TABLE `recycle_goods_type` (
+  `id` varchar(32) NOT NULL COMMENT '主键id',
+  `name` varchar(30) NOT NULL COMMENT '类别名称',
+  `describe` varchar(100) DEFAULT NULL COMMENT '类别描述',
+  `is_delete` char(3) NOT NULL DEFAULT '15' COMMENT '是否删除(14:已删除、15:未删除)',
+  `status` char(3) DEFAULT '33' COMMENT '商品状态(33:上架、34:下架)',
+  `create_time` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `update_time` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '修改时间',
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COMMENT='回收商品分类表';
+
+-- ----------------------------
+-- Table structure for recycle_order
+-- ----------------------------
+DROP TABLE IF EXISTS `recycle_order`;
+CREATE TABLE `recycle_order` (
+  `id` varchar(32) NOT NULL COMMENT '主键id',
+  `submit_user_id` varchar(32) NOT NULL COMMENT '下单用户id',
+  `receive_user_id` varchar(32) DEFAULT NULL COMMENT '接单用户id',
+  `order_type` char(3) NOT NULL COMMENT '订单类别(10:用户到骑手, 11:骑手到回收中心用户)',
+  `status` char(3) NOT NULL COMMENT '订单类别(4:待接单, 5:待上门, 6:待结算, 7:已完结, 8:已超时, 9:取消订单)',
+  `send_to_recycle_center` varchar(1) DEFAULT NULL COMMENT '是否已经送往回收中心',
+  `trading_money` double(7,2) NOT NULL COMMENT '交易金额',
+  `total_weight` double(7,2) NOT NULL COMMENT '订单总重量',
+  `total_integral` double(7,2) NOT NULL COMMENT '订单积分',
+  `address_id` varchar(32) NOT NULL COMMENT '上门地址id',
+  `appointment_begin_time` datetime NOT NULL COMMENT ' 预约开始时间',
+  `appointment_end_time` datetime NOT NULL COMMENT '预约结束时间',
+  `note` varchar(255) DEFAULT NULL COMMENT '下单备注',
+  `note_attachmentIds` varchar(255) DEFAULT NULL COMMENT '备注图片id列表',
+  `is_delete` char(3) NOT NULL DEFAULT '15' COMMENT '是否删除(14:已删除、15:未删除)',
+  `create_time` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `update_time` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '修改时间',
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COMMENT='回收商品订单表';
+
+-- ----------------------------
+-- Table structure for recycle_order_detail
+-- ----------------------------
+DROP TABLE IF EXISTS `recycle_order_detail`;
+CREATE TABLE `recycle_order_detail` (
+  `id` varchar(32) NOT NULL COMMENT '主键id',
+  `order_id` varchar(32) NOT NULL COMMENT '订单id',
+  `goods_id` varchar(32) NOT NULL COMMENT '商品id',
+  `weight` double(7,2) NOT NULL COMMENT '商品重量(KG)',
+  `is_delete` char(3) NOT NULL DEFAULT '15' COMMENT '是否删除(14:已删除、15:未删除)',
+  `create_time` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `update_time` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '修改时间',
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COMMENT='回收商品订单详情表';
+
+-- ----------------------------
+-- Table structure for recycle_statistical
+-- ----------------------------
+DROP TABLE IF EXISTS `recycle_statistical`;
+CREATE TABLE `recycle_statistical` (
+  `id` varchar(32) NOT NULL COMMENT '主键id',
+  `order_id` varchar(32) NOT NULL COMMENT '订单id',
+  `submit_user_id` varchar(32) NOT NULL COMMENT '下单用户id',
+  `receive_user_id` varchar(32) NOT NULL COMMENT '接单用户id',
+  `weight` double(7,2) NOT NULL COMMENT '商品重量(KG)',
+  `order_type` char(3) NOT NULL COMMENT '订单类别(10:用户到骑手, 11:骑手到回收中心用户)',
+  `is_delete` char(3) NOT NULL DEFAULT '15' COMMENT '是否删除(14:已删除、15:未删除)',
+  `create_time` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `update_time` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '修改时间',
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='回收统计表';
+
+-- ----------------------------
+-- Table structure for role
+-- ----------------------------
+DROP TABLE IF EXISTS `role`;
+CREATE TABLE `role` (
+  `id` varchar(32) NOT NULL COMMENT '角色id',
+  `role_name` varchar(20) NOT NULL DEFAULT '' COMMENT '角色名称',
+  `role_code` varchar(40) DEFAULT NULL COMMENT '角色编码',
+  `description` varchar(255) DEFAULT NULL COMMENT '描述',
+  `is_delete` char(3) NOT NULL DEFAULT '15' COMMENT '是否删除(14:已删除、15:未删除)',
+  `create_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `update_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COMMENT='角色表';
+
+-- ----------------------------
+-- Table structure for role_menu
+-- ----------------------------
+DROP TABLE IF EXISTS `role_menu`;
+CREATE TABLE `role_menu` (
+  `id` varchar(32) NOT NULL,
+  `role_id` varchar(32) NOT NULL DEFAULT '0',
+  `menu_id` varchar(32) NOT NULL DEFAULT '0',
+  `is_delete` char(3) NOT NULL DEFAULT '15' COMMENT '是否删除(14:已删除、15:未删除)',
+  `create_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `update_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COMMENT='角色权限关联表';
+
+-- ----------------------------
+-- Table structure for swiper
+-- ----------------------------
+DROP TABLE IF EXISTS `swiper`;
+CREATE TABLE `swiper` (
+  `id` varchar(32) NOT NULL COMMENT '主键id',
+  `type` char(3) NOT NULL COMMENT '类型(31:小程序端、32:App端)',
+  `attachment_id` varchar(32) NOT NULL COMMENT '附件id',
+  `title` varchar(30) DEFAULT NULL COMMENT '标题',
+  `sub_title` varchar(100) DEFAULT NULL COMMENT '子标题',
+  `detail` varchar(100) DEFAULT NULL COMMENT '详细信息',
+  `link` varchar(100) DEFAULT NULL COMMENT '跳转链接',
+  `is_delete` char(3) NOT NULL DEFAULT '15' COMMENT '是否删除(14:已删除、15:未删除)',
+  `create_time` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `update_time` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '修改时间',
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COMMENT='轮播图表';
+
+-- ----------------------------
+-- Table structure for system_dict
+-- ----------------------------
+DROP TABLE IF EXISTS `system_dict`;
+CREATE TABLE `system_dict` (
+  `id` varchar(32) NOT NULL COMMENT '主键id',
+  `dict_code` int NOT NULL COMMENT '数据类型编码',
+  `dict_name` varchar(30) NOT NULL COMMENT '数据类型名称',
+  `dict_describe` varchar(100) DEFAULT NULL COMMENT '描述',
+  `sort` int DEFAULT '1' COMMENT '排序',
+  `create_by` varchar(50) NOT NULL COMMENT '创建人',
+  `create_by_user_id` varchar(32) NOT NULL COMMENT '创建人id',
+  `update_by` varchar(50) DEFAULT NULL COMMENT '修改人',
+  `update_by_user_id` varchar(32) DEFAULT NULL COMMENT '修改人id',
+  `is_delete` char(3) NOT NULL DEFAULT '15' COMMENT '是否删除(14:已删除、15:未删除)',
+  `create_time` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `update_time` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '修改时间',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `idx_dict_code` (`dict_code`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COMMENT='系统字典类型表';
+
+-- ----------------------------
+-- Table structure for user
+-- ----------------------------
+DROP TABLE IF EXISTS `user`;
+CREATE TABLE `user` (
+  `id` varchar(32) NOT NULL COMMENT '主键id',
+  `username` varchar(32) NOT NULL COMMENT '用户名称',
+  `password` varchar(255) NOT NULL COMMENT '用户密码',
+  `user_type` char(3) NOT NULL COMMENT '用户类型(0:平台用户、1:微信用户、 2:骑手用户、 3:回收中心用户)',
+  `gender` char(3) DEFAULT NULL COMMENT '性别(20:男、21:女)',
+  `attachment_id` varchar(32) DEFAULT NULL COMMENT '附件id(头像)',
+  `nick_name` varchar(255) DEFAULT NULL COMMENT '昵称',
+  `phone` varchar(11) NOT NULL COMMENT '手机号',
+  `is_delete` char(3) NOT NULL DEFAULT '15' COMMENT '是否删除(14:已删除、15:未删除)',
+  `last_visit_time` datetime DEFAULT NULL COMMENT '最后登录时间',
+  `create_time` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `update_time` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '修改时间',
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COMMENT='骑手/回收中心用户/平台用户表';
+
+-- ----------------------------
+-- Table structure for user_feedback
+-- ----------------------------
+DROP TABLE IF EXISTS `user_feedback`;
+CREATE TABLE `user_feedback` (
+  `id` varchar(32) NOT NULL COMMENT '主键id',
+  `user_id` varchar(32) NOT NULL COMMENT '用户id',
+  `user_type` char(3) NOT NULL COMMENT '用户类型(0:平台用户、1:微信用户、 2:骑手用户、 3:回收中心用户)',
+  `feedback_title` varchar(32) NOT NULL COMMENT '反馈标题',
+  `feedback_detail` varchar(255) NOT NULL COMMENT '反馈详细',
+  `attachment_id` varchar(32) DEFAULT NULL COMMENT '附件id',
+  `is_solve` char(3) NOT NULL DEFAULT '37' COMMENT '是否解决(37:未处理、38:已处理)',
+  `is_delete` char(3) NOT NULL DEFAULT '15' COMMENT '是否删除(14:已删除、15:未删除)',
+  `create_time` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `update_time` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '修改时间',
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='用户反馈表';
+
+-- ----------------------------
+-- Table structure for user_role
+-- ----------------------------
+DROP TABLE IF EXISTS `user_role`;
+CREATE TABLE `user_role` (
+  `id` varchar(32) NOT NULL COMMENT '主键id',
+  `user_id` varchar(32) DEFAULT NULL COMMENT '用户id',
+  `role_id` varchar(32) DEFAULT NULL COMMENT '角色id',
+  `is_delete` char(3) NOT NULL DEFAULT '15' COMMENT '是否删除(14:已删除、15:未删除)',
+  `create_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `update_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COMMENT='用户角色关联表';
+
+-- ----------------------------
+-- Table structure for wx_integral
+-- ----------------------------
+DROP TABLE IF EXISTS `wx_integral`;
+CREATE TABLE `wx_integral` (
+  `id` varchar(32) NOT NULL COMMENT '主键id',
+  `user_id` varchar(32) NOT NULL COMMENT '用户id',
+  `integral` double(7,2) NOT NULL COMMENT '用户积分',
+  `is_delete` char(3) NOT NULL DEFAULT '15' COMMENT '是否删除(14:已删除、15:未删除)',
+  `create_time` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `update_time` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '修改时间',
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='用户积分表';
+
+-- ----------------------------
+-- Table structure for wx_integral_record
+-- ----------------------------
+DROP TABLE IF EXISTS `wx_integral_record`;
+CREATE TABLE `wx_integral_record` (
+  `id` varchar(32) NOT NULL COMMENT '主键id',
+  `user_id` varchar(32) NOT NULL COMMENT '用户id',
+  `order_id` varchar(32) NOT NULL COMMENT '订单id',
+  `pay_status` char(3) NOT NULL COMMENT '出入账状态(35:收入, 36:支出)',
+  `trading_integral` double(7,2) NOT NULL COMMENT '交易积分',
+  `is_delete` char(3) NOT NULL DEFAULT '15' COMMENT '是否删除(14:已删除、15:未删除)',
+  `create_time` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `update_time` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '修改时间',
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='用户积分流水表';
+
+-- ----------------------------
+-- Table structure for wx_user
+-- ----------------------------
+DROP TABLE IF EXISTS `wx_user`;
+CREATE TABLE `wx_user` (
+  `id` varchar(32) NOT NULL COMMENT '主键id',
+  `open_id` varchar(100) NOT NULL COMMENT 'open_id',
+  `skey` varchar(100) NOT NULL COMMENT 'skey',
+  `session_key` varchar(100) NOT NULL COMMENT 'session_key',
+  `gender` char(3) DEFAULT NULL COMMENT '性别(20:男、21:女)',
+  `avatar_url` varchar(255) DEFAULT NULL COMMENT '头像',
+  `city` varchar(255) DEFAULT NULL COMMENT '市',
+  `province` varchar(255) DEFAULT NULL COMMENT '省',
+  `country` varchar(255) DEFAULT NULL COMMENT '国',
+  `nick_name` varchar(255) DEFAULT NULL COMMENT '昵称',
+  `is_delete` char(3) NOT NULL DEFAULT '15' COMMENT '是否删除(14:已删除、15:未删除)',
+  `last_visit_time` datetime DEFAULT NULL COMMENT '最后登录时间',
+  `create_time` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `update_time` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '修改时间',
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COMMENT='小程序用户信息表';
+
+-- ----------------------------
+-- Table structure for wx_user_address_rel
+-- ----------------------------
+DROP TABLE IF EXISTS `wx_user_address_rel`;
+CREATE TABLE `wx_user_address_rel` (
+  `id` varchar(32) CHARACTER SET utf8 COLLATE utf8_danish_ci NOT NULL COMMENT '主键id',
+  `user_id` varchar(32) NOT NULL COMMENT '用户id',
+  `address_id` varchar(32) NOT NULL COMMENT '地址id',
+  `is_delete` char(3) NOT NULL DEFAULT '15' COMMENT '是否删除(14:已删除、15:未删除)',
+  `create_time` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `update_time` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '修改时间',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `user_id` (`user_id`,`address_id`),
+  KEY `address_id` (`address_id`),
+  CONSTRAINT `wx_user_address_rel_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `wx_user` (`id`),
+  CONSTRAINT `wx_user_address_rel_ibfk_2` FOREIGN KEY (`address_id`) REFERENCES `address` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COMMENT='小程序用户信息和地址信息关联表';
 ```
 
 
@@ -1091,12 +673,9 @@ create table `wx_user_address_rel` (
 INSERT INTO 
   `wjhs`.`user` (`id`, `username`, `password`, `user_type`, `gender`, `attachment_id`, `nick_name`, `phone`, `is_delete`, `last_visit_time`, `create_time`, `update_time`) 
 VALUES 
-  ('369BCFE480454D22A07A8644F6DF0349', 'admin', '123456', 0, 20, NULL, '管理员', 15989874455, 15, NULL,  NULL),
-  ('ADBD5F0E46474696B65140568E43385E', 'sunlei', 'sunlei123456!@#', 2, 20, NULL, '孙雷', 15854231177, 15, NULL,  NULL),
-  ('F2532E33786F4B8D9FA2DB00F03352FB', 'ilovesshan', 'ilovesshan123456!@#', 3, 20, NULL, NULL, 18856492388, NULL,  NULL);
-
-
-
+  ('369BCFE480454D22A07A8644F6DF0349', 'admin', '_hSF8lwCW9Ha2zdsii0AjaOSsVwKQ28Ti3SUe144KXU=', 0, 20, NULL, '管理员', 15989874455, 15, NULL,  NULL),
+  ('ADBD5F0E46474696B65140568E43385E', 'sunlei', '_hSF8lwCW9Ha2zdsii0AjaOSsVwKQ28Ti3SUe144KXU=', 2, 20, NULL, '孙雷', 15854231177, 15, NULL,  NULL),
+  ('F2532E33786F4B8D9FA2DB00F03352FB', 'ilovesshan', '_hSF8lwCW9Ha2zdsii0AjaOSsVwKQ28Ti3SUe144KXU=', 3, 20, NULL, NULL, 18856492388, NULL,  NULL);
 
 -- 初始化 角色表数据
 INSERT INTO 
@@ -1107,7 +686,6 @@ VALUES
   ('509E0E6D5A464248BBB60F1869B701FA', '骑手用户','QSYH', '', 15, NULL, NULL),
   ('D3E36342C3C943AA99587F23D60EB272', '回收中心用户', 'HSZXYH', '', 15, NULL,  NULL);
 
-	
 
 -- 初始化 字典表数据
 INSERT INTO 
@@ -1124,7 +702,7 @@ VALUES
   ('AAF67629CAF84590AF9E0ECACD2DAF6A', 7, '回收订单状态(hsddzt)', '已完结', 1 , 'admin', '369BCFE480454D22A07A8644F6DF0349', NULL, NULL, 15,  NULL, NULL),
   ('217D885919544570B41D3C222C967BE8', 8, '回收订单状态(hsddzt)', '已超时', 1 , 'admin', '369BCFE480454D22A07A8644F6DF0349', NULL, NULL, 15,  NULL, NULL),
   ('EFF59628C8CE4AD4BFDDAC155CA82058', 9, '回收订单状态(hsddzt)', '取消订单', 1 , 'admin', '369BCFE480454D22A07A8644F6DF0349', NULL, NULL, 15, NULL, NULL),
-  
+
   ('8CF00400B3CE420BAAE6F40687BDE431', 10, '回收订单流程(hsddlc)', '用户到骑手', 1 , 'admin', '369BCFE480454D22A07A8644F6DF0349', NULL, NULL, 15, NULL, NULL),
   ('1E20CEADCB444D0DA3AB0A46000E552F', 11, '回收订单流程(hsddlc)', '骑手到回收中心', 1 , 'admin', '369BCFE480454D22A07A8644F6DF0349', NULL, NULL, 15, NULL, NULL),
 
@@ -1133,16 +711,18 @@ VALUES
 
   ('C536B35929B24A7B8FC5A01B04181259', 14, '数据状态(sjzt)', '逻辑删除(已经删除)', 1 , 'admin', '369BCFE480454D22A07A8644F6DF0349', NULL, NULL, 15, NULL, NULL),
   ('CE15758CA04B4CB887A851B9E459FE68', 15, '数据状态(sjzt)', '逻辑删除(未删除)', 1 , 'admin', '369BCFE480454D22A07A8644F6DF0349', NULL, NULL, 15, NULL, NULL),
-  
+
   ('41C8973B5AFE4F8A84820AA83B8FE6B7', 16, '积分商品状态(jfspzt)', '正常', 1 , 'admin', '369BCFE480454D22A07A8644F6DF0349', NULL, NULL, 15, NULL, NULL),
   ('91B47BF061D34301BE521FA283839CEF', 17, '积分商品状态(jfspzt)', '已下架', 1 , 'admin', '369BCFE480454D22A07A8644F6DF0349', NULL, NULL, 15, NULL, NULL),
-  
+
   ('968294A4D44D46DD8775990144DFBF40', 18, '地址信息状态(dzxxzt)', '默认地址', 1 , 'admin', '369BCFE480454D22A07A8644F6DF0349', NULL, NULL, 15, NULL, NULL),
   ('A1915E353BB54DF4A32DF0B9AAE6FABF', 19, '地址信息状态(dzxxzt)', '非默认地址', 1 , 'admin', '369BCFE480454D22A07A8644F6DF0349', NULL, NULL, 15, NULL, NULL),
-  
-  ('538FB84080D24AC9B1904F5270D33C85', 20, '性别状态(xbzt)', '男', 1 , 'admin', '369BCFE480454D22A07A8644F6DF0349', NULL, NULL, 15, NULL, NULL),
-  ('9D73A5790DCD4CF2815CF8119976D116', 21, '性别状态(xbzt)', '女', 1 , 'admin', '369BCFE480454D22A07A8644F6DF0349', NULL, NULL, 15, NULL, NULL),
-  
+
+  ('538FB84080D24AC9B1904F5270D33C85', 20, '性别状态(xbzt)', '男', 1 , 'admin', 
+   '369BCFE480454D22A07A8644F6DF0349', NULL, NULL, 15, NULL, NULL),
+  ('9D73A5790DCD4CF2815CF8119976D116', 21, '性别状态(xbzt)', '女', 1 , 'admin', 
+   '369BCFE480454D22A07A8644F6DF0349', NULL, NULL, 15, NULL, NULL),
+
   ('6E90BCA2A59D4F6EA4874820B7251536', 22, '操作状态(czzt)', '成功', 1 , 'admin', '369BCFE480454D22A07A8644F6DF0349', NULL, NULL, 15, NULL, NULL),
   ('99FABB30FF9E47D4BF3DB044C01AC85C', 23, '操作状态(czzt)', '失败', 1 , 'admin', '369BCFE480454D22A07A8644F6DF0349', NULL, NULL, 15, NULL, NULL),
 
@@ -1153,16 +733,33 @@ VALUES
 
   ('763A480C51BC4D68AC49F6652D1BF0D2', 28, '菜单类型(cdlx)', '目录', 1 , 'admin', '369BCFE480454D22A07A8644F6DF0349', NULL, NULL, 15, NULL, NULL),
   ('E72D13A4320B41D08452C127174E5392', 29, '菜单类型(cdlx)', '菜单', 1 , 'admin', '369BCFE480454D22A07A8644F6DF0349', NULL, NULL, 15, NULL, NULL),
-  ('6F07165F9BF54089B781D91F125283C7', 30, '菜单类型(cdlx)', '按钮', 1 , 'admin', '369BCFE480454D22A07A8644F6DF0349', NULL, NULL, 15, NULL, NULL);
+  ('6F07165F9BF54089B781D91F125283C7', 30, '菜单类型(cdlx)', '按钮', 1 , 'admin', '369BCFE480454D22A07A8644F6DF0349', NULL, NULL, 15, NULL, NULL),
 
+    ('7B780A0BF5EB46248FB77D800AD7024D', 31, '终端类型(zdlx)', '小程序', 1 , 'admin', '369BCFE480454D22A07A8644F6DF0349', NULL, NULL),
+  ('B81A602284B44052AE1BE0D5EBBA9A2E', 32, '终端类型(zdlx)', 'App', 1 , 'admin', 
+   '369BCFE480454D22A07A8644F6DF0349', NULL, NULL),
+
+    ('6EB0678757884A29870847A2A625526D', 33, '商品状态(spzt)', '上架', 1 , 'admin', '369BCFE480454D22A07A8644F6DF0349', NULL, NULL),
+  ('FED74C098E4543BE9B1C82DA06F49985', 34, '商品状态(spzt)', '下架', 1 , 'admin', '369BCFE480454D22A07A8644F6DF0349', NULL, NULL),
+
+  ('1ddc152f8ee44b6f90d86db9fc482fe0', 35, '出入账状态(crzzt)', '支出', 1 , 'admin', '369BCFE480454D22A07A8644F6DF0349', NULL, NULL),
+  ('8623d4a600154cb888562038ec308821', 36, '出入账状态(crzzt)', '收入', 1 , 'admin', '369BCFE480454D22A07A8644F6DF0349', NULL, NULL),
+
+    ('500ecc8e61924a80a7d2960016f6ada9', 37, '反馈处理状态(fkclzt)', '未处理', 1 , 'admin', '369BCFE480454D22A07A8644F6DF0349', NULL, NULL),
+  ('03b799466fe546799cc1b127e46e983c', 38, '反馈处理状态(fkclzt)', '已处理', 1 , 'admin', '369BCFE480454D22A07A8644F6DF0349', NULL, NULL),
+
+    ('eda45a148e0b430ba65cfa7479f2ed79', 39, 'app更新状态(appgxzt)', '无版本更新', 1 , 'admin', '369BCFE480454D22A07A8644F6DF0349', NULL, NULL),
+  ('22d68c0e484b411e9b284f0941ff12cf', 40, 'app更新状态(appgxzt)', '有版本更新，不需要强制升级', 1 , 'admin', '369BCFE480454D22A07A8644F6DF0349', NULL, NULL),
+  ('b93cc53a6675430da69c6f848dd3a500', 41, 'app更新状态(appgxzt)', '有版本更新，需要强制升级', 1 , 'admin', '369BCFE480454D22A07A8644F6DF0349', NULL, NULL);
 
 
 -- 初始化 账户表数据
 INSERT INTO 
   `wjhs`.`account` (`id`, `user_type`, `user_id`, `balance`, `create_time`, `update_time`) 
 VALUES 
-  ('11D26E088CDA47D581DD6290AEC61BB7', 0, '369BCFE480454D22A07A8644F6DF0349', 5000, NULL, NULL),
-  ('EC9A069267EC4DC5A25AA3A2C5F0A741', 0, 'ADBD5F0E46474696B65140568E43385E', 200, NULL, NULL);
+  ('bdb449e9d322473d86fcbc7434ebb1ef', 0, '369BCFE480454D22A07A8644F6DF0349', 1000000, NULL, NULL),
+  ('11D26E088CDA47D581DD6290AEC61BB7', 0, 'ADBD5F0E46474696B65140568E43385E', 1000, NULL, NULL),
+  ('EC9A069267EC4DC5A25AA3A2C5F0A741', 0, 'F2532E33786F4B8D9FA2DB00F03352FB', 5000, NULL, NULL);
 
 
 
@@ -1170,129 +767,10 @@ VALUES
 INSERT INTO 
   `wjhs`.`account_record` (`id`, `user_type_from`, `user_type_to`, `user_id_from`, `user_id_to`, `trading_id`, `trading_money`, `trading_type`, `trading_note`, `create_time`, `update_time`) 
 VALUES 
-  ('1331266BF62E47DBBFC277D098B25233', 0, 3, '369BCFE480454D22A07A8644F6DF0349', 'F2532E33786F4B8D9FA2DB00F03352FB', NULL, 5000, 28, '用户注册，系统首次充值', NULL, NULL),
-  ('E527EADFA76A46A48164ECEDC65721FD', 0, 2, '369BCFE480454D22A07A8644F6DF0349', 'ADBD5F0E46474696B65140568E43385E', NULL, 200, 28, '用户注册，系统首次充值', NULL, NULL);
-```
-
-
-
-#### 5、数据库脚本更新
-
-`V20221203.01__update_user_password.sql`
-
-```sql
--- 更新密码
-update `user` set password = '_hSF8lwCW9Ha2zdsii0AjaOSsVwKQ28Ti3SUe144KXU=' where id = '369BCFE480454D22A07A8644F6DF0349';
-
-update `user` set password = 'qtLSKnRZzQ6j7ERhHQLLfu9Nx1WsdWe87EfQ6mABoTU=' where id = 'ADBD5F0E46474696B65140568E43385E';
-
-update `user` set password = 'Vm4gI_I5r6uH6FaHvT17168U_HhMxNfQCYgN1Ro6Jz23fkEPuSL_W0PkYsW1u27P=' where id = 'F2532E33786F4B8D9FA2DB00F03352FB';
-```
-
-
-
-`V20221204.01__update_operation_log_table_structure.sql`
-
-```sql
--- 更改字段长度
-alter table operation_log modify `url` VARCHAR(255) NOT NULL COMMENT '请求url';
-```
-
-
-
-`V20221204.02__insert_system_dict_table.sql`
-
-```sql
--- 添加数据
-INSERT INTO
-  `wjhs`.`system_dict` (`id`, `dict_code`, `dict_name`, `dict_describe`, `sort`, `create_by`, `create_by_user_id`, `update_by`, `update_by_user_id`)
-VALUES
-  ('7B780A0BF5EB46248FB77D800AD7024D', 31, '终端类型(zdlx)', '小程序', 1 , 'admin', '369BCFE480454D22A07A8644F6DF0349', NULL, NULL),
-  ('B81A602284B44052AE1BE0D5EBBA9A2E', 32, '终端类型(zdlx)', 'App', 1 , 'admin', '369BCFE480454D22A07A8644F6DF0349', NULL, NULL);
+  ('E527EADFA76A46A48164ECEDC65721FD', 2, 0, 'ADBD5F0E46474696B65140568E43385E', '369BCFE480454D22A07A8644F6DF0349', NULL, 1000, 28, '用户注册，系统首次充值', NULL, NULL),
+  ('1331266BF62E47DBBFC277D098B25233', 3, 0, 'F2532E33786F4B8D9FA2DB00F03352FB', '369BCFE480454D22A07A8644F6DF0349', NULL, 5000, 28, '用户注册，系统首次充值', NULL, NULL);
 
 ```
-
-
-
-`V20221204.03__update_swiper_and_notice_structure_table.sql`
-
-```sql
--- 更改type字段备注说明
-alter table swiper modify `type` char(3)  NOT NULL COMMENT '类型(31:小程序端、32:App端)';
-
--- 更改type字段备注说明
-alter table notice modify `type` char(3)  NOT NULL COMMENT '类型(31:小程序端、32:App端)';
-```
-
-
-
-`V20221209.01__update_attachment_table_structure.sql`
-
-```sql
--- 更改字段长度
-alter table attachment modify `create_by_user_name` varchar(32) not null comment '创建人姓名';
-
-```
-
-
-
-`V20221209.02__update_operation_log_table_structure.sql`
-
-```sql
--- 更改字段长度
-alter table operation_log modify `user_name` varchar(100) not null comment '操作人员姓名';
-alter table operation_log modify `api_method` varchar(255) not null comment 'api方法';
-alter table operation_log modify `error_message` text  not null comment '错误消息';
-
-```
-
-
-
-`V20221211.01__insert_system_dict_table.sql`
-
-```sql
--- 添加数据
-INSERT INTO
-  `wjhs`.`system_dict` (`id`, `dict_code`, `dict_name`, `dict_describe`, `sort`, `create_by`, `create_by_user_id`, `update_by`, `update_by_user_id`)
-VALUES
-  ('6EB0678757884A29870847A2A625526D', 33, '商品状态(spzt)', '上架', 1 , 'admin', '369BCFE480454D22A07A8644F6DF0349', NULL, NULL),
-  ('FED74C098E4543BE9B1C82DA06F49985', 34, '商品状态(spzt)', '下架', 1 , 'admin', '369BCFE480454D22A07A8644F6DF0349', NULL, NULL);
-
-
-```
-
-
-
-`V20221211.02__update_recycle_goods_type_table_structure.sql.sql`
-
-```sql
--- 添加上下架状态字段(status)
-alter table `recycle_goods_type` add `status` char(3) default 33 COMMENT '商品状态(33:上架、34:下架)' after `is_delete`;
-```
-
-
-
-`V20221211.03__update_recycle_goods_table_structure.sql.sql`
-
-```sql
--- 添加上下架状态字段(status)
-alter table `recycle_goods` add `status` char(3) default 33  COMMENT '商品状态(33:上架、34:下架)' after `is_delete`;
-```
-
-
-
-`V20221211.04__update_recycle_goods_table_structure.sql`
-
-```sql
--- 更改字段名称
-alter table `recycle_goods` change `recycle_center__price` `recycle_center_price` double(7,2) NOT NULL COMMENT '回收中心用户价格';
-```
-
-
-
-
-
-
 
 
 
