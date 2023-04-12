@@ -26,6 +26,10 @@ module.exports = {
         link: '/',
       },
       {
+        text: '项目设计',
+        link: '/pages/design.md',
+      },
+      {
         text: '服务端',
         link: '/pages/server.md',
       },
